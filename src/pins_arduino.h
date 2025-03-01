@@ -47,6 +47,13 @@ static const uint8_t ENC_SCL = 5;
 // Pin 45 is not connected to anything, so we can use it
 static const uint8_t ENC_MOSI = 45;
 
+// Servo pins
+static const uint8_t PMW_0 = 37;
+static const uint8_t PMW_1 = 39;
+static const uint8_t PMW_2 = 40;
+static const uint8_t PMW_3 = 38;
+
+
 // ch0 Motor and Encoder pins
 static const uint8_t CH0_ENC_CS = 6;
 static const uint8_t CH0_UH = 3;
