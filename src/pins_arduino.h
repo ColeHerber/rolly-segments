@@ -48,10 +48,10 @@ static const uint8_t ENC_SCL = 5;
 static const uint8_t ENC_MOSI = 45;
 
 // Servo pins
-static const uint8_t PMW_0 = 37;
-static const uint8_t PMW_1 = 39;
-static const uint8_t PMW_2 = 40;
-static const uint8_t PMW_3 = 38;
+static const uint8_t PWM_0 = 37;
+static const uint8_t PWM_1 = 39;
+static const uint8_t PWM_2 = 40;
+static const uint8_t PWM_3 = 38;
 
 
 // ch0 Motor and Encoder pins
