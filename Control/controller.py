@@ -2,46 +2,57 @@ import pygame
 import serial
 import time
 
-# Initialize Joystick
 pygame.init()
-pygame.joystick.init()
 joystick = pygame.joystick.Joystick(0)
 joystick.init()
 
-# Bluetooth port (replace with your COM port)
-bt_port = 'COM3'
+bt_port = 'COM3'  # Change to your BT COM port
 baud_rate = 115200
 ser = serial.Serial(bt_port, baud_rate)
 
-print("Joystick started. Sending commands...")
+print("Joystick started!")
 
 try:
     while True:
         pygame.event.pump()
 
-        # Joystick axes:
-        forward_axis = -joystick.get_axis(1)  # Usually forward/backward
-        turn_axis = joystick.get_axis(3)      # Usually left/right
+        # Joystick axes
+        forward_axis = -joystick.get_axis(1) # Forward/Backward
+        turn_axis = joystick.get_axis(3)     # Turning
 
-        # Scale velocities
-        forward_velocity = forward_axis * 30  # Max speed: 30 rad/s
-        turn_velocity = turn_axis * 15        # Turn scaling
+        forward_velocity = forward_axis * 30 # rad/s scaling
+        turn_velocity = turn_axis * 15       # rad/s scaling
 
-        # Servo angle example using button 0
-        servo_angle = 90
+        # Buttons controlling servos
+        servo_angles = [90,90,90,90] # default angles
+
         if joystick.get_button(0):
-            servo_angle = 0   # e.g., button pressed moves servo angle
-        elif joystick.get_button(1):
+            servo_angle_1 = 0
+        else:
             servo_angle = 90
 
-        # Format command string
-        command = f"{forward_velocity:.2f},{turn_velocity:.2f},{servo_angle}\n"
+        if joystick.get_button(1):
+            servo_angle2 = 45
+        else:
+            servo_angle2 = 90
+
+        if joystick.get_button(2):
+            servo_angle3 = 135
+        else:
+            servo_angle3 = 90
+
+        if joystick.get_button(3):
+            servo_angle4 = 0
+        else:
+            servo_angle4 = 90
+
+        command = f"{forward_velocity:.2f},{turn_velocity:.2f},{servo_angle},{servo_angle2},{servo_angle3},{servo_angle4}\n"
         ser.write(command.encode())
         
         print(f"Sent: {command.strip()}")
-        time.sleep(0.05)
+        pygame.time.wait(100)
 
 except KeyboardInterrupt:
     print("Exiting...")
-finally:
-    ser.close()
+
+ser.close()
