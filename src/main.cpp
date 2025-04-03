@@ -1,7 +1,5 @@
-// #include <FreeRTOS.h>
 #include "pins_arduino.h" // Include custom pins for AXIS board
 #include <SimpleFOC.h>
-// #include <BluetoothSerial.h> //might not work look here if failing
 #include <ESP32Servo.h>
 
 #include "SimpleFOCDrivers.h"
@@ -22,14 +20,44 @@ MagneticSensorMT6701SSI encoder1(CH1_ENC_CS);
 
 SPIClass hspi = SPIClass(HSPI);
 
-// BluetoothSerial SerialBT; 
-// int servo_angles[4] = {90,90,90,90}; // Default positions
+// Time point for referencing in loop serial log
+unsigned long time_point = 0;
+
+// make a task handle for the servo
+TaskHandle_t servoTask;
+uint8_t servoTaskFreq = 1000; // 1kHz
+
+// Servos on pins 37, 39, 40, 38
+uint8_t servoPins[4] = {37, 39, 40, 38};
+Servo servo[4];
+
+// servoTask callback to run a sinusoidal motion on the servos
+// it will run at the frequency of servoTaskFreq in Hz
+// the amplitude of the motion is 75 degrees
+void servoTaskCallback(void *pvParameters) {
+  // set the initial position
+  float angle = 0;
+  // set the amplitude of the sinusoidal motion
+  float amplitude = 75;
+  // set the frequency of the sinusoidal motion
+  float frequency = 0.3;
+  // set the initial time
+  unsigned long time = millis();
+
+  while(1) {
+    // calculate the new angle
+    angle = amplitude * sin(2 * PI * frequency * (millis() - time) / 1000);
+    // write the new angle to the servos
+    for (int i = 0; i < 4; i++) {
+      servo[i].write(90 + angle);
+    }
+    // delay to control the frequency of the task
+    vTaskDelay(1000 / servoTaskFreq / portTICK_PERIOD_MS);
+  }
+}
+
 
 void setup() {
-  // // Bluetooth setup
-  // SerialBT.begin("ESP32_RC_Car");
-  // Serial.println("Bluetooth started!");
-
 
   Serial.begin(115200);
   delay(1000);
@@ -98,24 +126,19 @@ void setup() {
   motor1.velocity_limit = 500; // rad/s, max rpm is about this
   motor1.current_limit = 2;
 
+  // attach the servos to their pins
+  for (int i = 0; i < 4; i++) {
+    servo[i].attach(servoPins[i]);
+  }
 
-
-  // Servo servo1, servo2, servo3, servo4;
-  // servo1.attach(13);
-  // servo2.attach(12);
-  // servo3.attach(14);
-  // servo4.attach(27);
+  // start the servo task pinned to core 1
+  xTaskCreatePinnedToCore(servoTaskCallback, "servoTask", 2048, NULL, 1, &servoTask, 1);
 
   delay(1000);
-
-
-
 }
-float forward_velocity = 0;
-float turn_velocity = 0;
 
 // velocity set point variable
-float target_velocity = 20; 
+float target_velocity = 100; 
 
 void loop() {
   // main FOC algorithm function
@@ -128,43 +151,17 @@ void loop() {
 
   // Get encoder velocity (rad/s)
   float angle = encoder1.getAngle();
+  float velocity = encoder1.getVelocity();
 
-  // Print velocity
-  Serial.print("angle: ");
-  Serial.println(angle);
+  // // Print velocity on 100hz updates
+  // if (millis() - time_point > 100) {
+  //   time_point = millis();
+  //   Serial.print("Velocity: ");
+  //   Serial.print(velocity);
+  //   Serial.print("rad/s   |   Angle: ");
+  //   Serial.print(angle);
+  //   Serial.println("rad");
+  // }
 
-  delay(10);
-  // handleBluetoothInput();
-  // servo1.write(servo_angles[0]);
-  // servo2.write(servo_angles[1]);
-  // servo3.write(servo_angle[2]);
-  // servo4.write(servo_angle[3]);
-
-
+  delay(1);
 }
-
-// void handleBluetoothInput() {
-//   if (SerialBT.available()) {
-//     String input = SerialBT.readStringUntil('\n');
-//     parseCommand(input);
-//   }
-// }
-
-// void parseCommand(String msg) {
-//   // Expected: forward,turn,s1,s2,s3,s4\n
-//   int idx1 = msg.indexOf(',');
-//   int idx2 = msg.indexOf(',', idx1+1);
-//   int idx3 = msg.indexOf(',', idx2+1);
-//   int idx3 = msg.indexOf(',', idx2+1);
-//   int idx4 = msg.indexOf(',', idx2+1);
-//   int idx5 = msg.indexOf(',', idx3+1);
-
-//   if (idx5 == -1) return; // Ensure full message received
-
-//   forward_velocity = msg.substring(0, idx1).toFloat();
-//   turn_velocity = msg.substring(idx1+1, idx2).toFloat();
-//   servo_angle[0] = msg.substring(idx2+1, idx3).toInt();
-//   servo_angle[1] = msg.substring(idx3+1, idx4).toInt();
-//   servo_angle[2] = msg.substring(idx4+1, idx5).toInt();
-//   servo_angle[3] = msg.substring(idx5+1).toInt();
-// }
