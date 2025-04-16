@@ -3,14 +3,14 @@
 #include <ArduinoJson.h>
 
 // --- Define the MQTT Broker Settings ---
-const char* mqtt_server = "192.168.8.103"; //  <<--- YOUR MQTT BROKER IP
+const char* mqtt_server = "rollyServer.local"; //  <<--- YOUR MQTT BROKER IP
 const int mqtt_port = 1883;
-const char* mqtt_user = "snap";//snap is blue, crackle is gray, pop is ?
+const char* mqtt_user = NAME;//snap is blue, crackle is gray, pop is ?
 const char* mqtt_password = "pillbugs";
 const char* mqtt_topic = "rolly";         // General data topic
-const char* mqtt_sub_topic = "rolly/cmd/#"; // Subscribe topic
-const char* mqtt_ota_topic = "rolly/ota/update";        // OTA topic
-const char* mqtt_ota_status_topic = "rolly/ota/status"; // OTA Status
+const char* mqtt_sub_topic = ("rolly/"+ std::string(NAME) +"/#").c_str(); // Subscribe topic
+const char* mqtt_ota_topic = ("rolly/" + std::string(NAME) + "/ota/update").c_str();        // OTA topic
+const char* mqtt_ota_status_topic = ("rolly/" + std::string(NAME) + "/ota/status").c_str();      // OTA Status
 
 WiFiClient espClient;
 PubSubClient client(espClient);  // Define the client object
@@ -18,16 +18,20 @@ PubSubClient client(espClient);  // Define the client object
 // Define the atomic variables (allocate memory for them)
 extern std::atomic<bool> enable_flag;
 extern std::atomic<bool> disable_flag;
-extern std::atomic<float> last_commanded_target;
+extern std::atomic<float> motor0_target;
+extern std::atomic<float> motor1_target;
+
+
+extern std::atomic<float> servo3_pos;
+extern std::atomic<float> servo0_pos;
+extern std::atomic<float> servo1_pos;
+extern std::atomic<float> servo2_pos;
+
 extern std::atomic<uint> last_commanded_mode;
 extern std::atomic<float> command_vel_p_gain;
 extern std::atomic<float> command_vel_i_gain;
 extern std::atomic<float> command_vel_d_gain;
 extern std::atomic<float> command_vel_lpf;
-extern std::atomic<float> command_pos_p_gain;
-extern std::atomic<float> command_pos_i_gain;
-extern std::atomic<float> command_pos_d_gain;
-extern std::atomic<float> command_pos_lpf;
 
 void setupMQTT() {
     client.setServer(mqtt_server, mqtt_port);
@@ -38,7 +42,7 @@ void setupMQTT() {
 void reconnectMQTT() {
     while (!client.connected()) {
         Serial.print("Attempting MQTT connection...");
-        String clientId = *mqtt_user + "-";//should maybe be snap/crackle/pop
+        String clientId = NAME;//should maybe be snap/crackle/pop
         clientId += String(WiFi.macAddress());
         Serial.print("Client ID: ");
         Serial.println(clientId);
@@ -94,8 +98,11 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         StaticJsonDocument<512> doc;
         deserializeJson(doc, message);
 
-        if (doc.containsKey("target")) {
-            last_commanded_target.store(doc["target"].as<float>());
+        if (doc.containsKey("motor0")) {
+            motor0_target.store(doc["target"].as<float>());
+        }
+        if (doc.containsKey("motor1")) {
+            motor1_target.store(doc["target"].as<float>());
         }
         if (doc.containsKey("mode")) {
             last_commanded_mode.store(doc["mode"].as<uint>());
@@ -111,18 +118,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         }
         if (doc.containsKey("vel_lpf")) {
             command_vel_lpf.store(doc["vel_lpf"].as<float>());
-        }
-        if (doc.containsKey("pos_p")) {
-            command_pos_p_gain.store(doc["pos_p"].as<float>());
-        }
-        if (doc.containsKey("pos_i")) {
-            command_pos_i_gain.store(doc["pos_i"].as<float>());
-        }
-        if (doc.containsKey("pos_d")) {
-            command_pos_d_gain.store(doc["pos_d"].as<float>());
-        }
-        if (doc.containsKey("pos_lpf")) {
-            command_pos_lpf.store(doc["pos_lpf"].as<float>());
         }
         if (doc.containsKey("enable")) {
             enable_flag.store(doc["enable"].as<bool>());

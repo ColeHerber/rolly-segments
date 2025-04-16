@@ -9,7 +9,8 @@ mosquitto
     To make stop 
         brew services stop mosquitto
     to restart
-    
+        brew restart stop mosquitto
+
 Edited the mosquitto.conf file because of wsl2
     code /opt/homebrew/etc/mosquitto/mosquitto.conf     
     # In order to make this work with more than just WSL2:
@@ -27,6 +28,26 @@ Added a user to the mosquitto broker(do it twice?)
 (remember to restart mosquitto when editing .conf file)
    brew services restart mosquitto
 
+Also rememebr to disable all filters, they easily result in errors
 
 END OF MQTT BROKER NOTES -----------------------------------------------
 
+MQTT FORMAT:
+-----------------------------------------------
+MQTT TOPIC PUBLISHES DATA BASED OF FILE IN MAIN, updates accordingly
+
+mosquitto_sub -h 192.168.8.103 -p 1883 -t "rolly/#"
+
+
+END OF MQTT 
+-----------------------------------------------
+
+
+CONTROL NOTES ------------------------------------------------------
+Right now is just basic control
+Should publish MQTT node to my laptop that prints out gravity vector, motor commands
+
+TODO:
+   
+    -GIVE EACH GUY THEIR OWN MQTT THREAD
+    -HELP

@@ -22,7 +22,7 @@ void setup() {
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
 
-    ArduinoOTA.setHostname("snap");
+    ArduinoOTA.setHostname(NAME);
     ArduinoOTA.onStart([]() {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH) {
