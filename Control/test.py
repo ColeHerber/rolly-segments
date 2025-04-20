@@ -4,27 +4,26 @@ import random
 import threading
 import dearpygui.dearpygui as dpg
 # Define all variables
+import json
+# Define all variables
 variables = {
-    "motor0": 0.0,
-    "motor1": 0.0,
-    "mode": 0,
+    "target": 0.0,
+    "mode": "velocity",
     "vel_p": 0.0,
     "vel_i": 0.0,
     "vel_d": 0.0,
     "vel_lpf": 0.0,
-    "servo0": 0.0,
-    "servo1": 0.0,
-    "servo2": 0.0,
-    "servo3": 0.0,
+    "enable": False,
+    "disable": True
 }
 input_ids = {}
-enable_flag = True
+enable_flag = False
 
 from paho.mqtt import client as mqtt_client
 
 broker = 'rollyserver.local'
 port = 1883
-topic = "rolly/cmd"
+topic = "rolly/cmd/"#the slashes matter, yay
 # Generate a Client ID with the publish prefix.
 client_id = f'mac'
 # username = 'emqx'
@@ -67,8 +66,8 @@ def input_callback(sender, app_data, user_data):
             variables[key] = int(app_data)
         else:
             variables[key] = float(app_data)
-        msg = f"{key}: {variables[key]}"
-        publish(client, msg)
+
+        publish(client, json.dumps(variables, separators=(',', ':')))
     except ValueError:
         pass
     
@@ -78,8 +77,15 @@ def toggle_enable():
     global enable_flag
     enable_flag = not enable_flag
     dpg.set_value("enable_button", f"Enabled: {enable_flag}")
-    print(f"enable: {enable_flag}")
+    if enable_flag:
+       variables["enable"] = True
+       variables["disable"] = False
+    else:
+       variables["enable"] = False
+       variables["disable"] = True
 
+    publish(client, json.dumps(variables, separators=(',', ':')))
+    
 # GUI setup
 dpg.create_context()
 dpg.create_viewport(title="Control Panel", width=700, height=350)
@@ -106,7 +112,7 @@ with dpg.window(label="Edit Parameters", width=680, height=330) as main_window:
                     input_ids[key] = input_id
 
     dpg.add_spacer(height=10)
-    dpg.add_button(label="Enabled: True", callback=toggle_enable, tag="enable_button")
+    dpg.add_button(label="Enabled", callback=toggle_enable, tag="enable_button")
     dpg.add_button(label="Exit", callback=lambda: dpg.stop_dearpygui())
 
 
