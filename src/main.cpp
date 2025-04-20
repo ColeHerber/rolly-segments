@@ -13,7 +13,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.133"   // updated dynamically from python script
+#define VERSION "1.0.216"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -50,22 +50,22 @@ Servo servo[4];
 Imu::Imu imu;
 
 // global atomic variable for the motor stuff to be set by mqtt
-std::atomic<float> motor0_target = 0;
-std::atomic<float> motor1_target = 0;
+std::atomic<float> target0 = 0.5;
+std::atomic<float> target1 = 0.5;
 
-std::atomic<float> command_vel_p_gain = 0;
-std::atomic<float> command_vel_i_gain = 0;
+std::atomic<float> command_vel_p_gain = 5;
+std::atomic<float> command_vel_i_gain = 3;
 std::atomic<float> command_vel_d_gain = 0;
-std::atomic<float> command_vel_lpf = 0;
+std::atomic<float> command_vel_lpf = 0.1;
 
 std::atomic<float> servo0_pos = 0;
 std::atomic<float> servo1_pos = 0;
 std::atomic<float> servo2_pos = 0;
 std::atomic<float> servo3_pos = 0;
 
-std::atomic<bool> enable_flag = false;
+std::atomic<bool> enable_flag = true;
 std::atomic<bool> disable_flag = false;
-std::atomic<bool> motors_enabled = false;
+std::atomic<bool> motors_enabled = true;
 std::atomic<bool> servos_enabled = false;
 
 // 0 for torque, 1 for velocity, 2 for position
@@ -153,10 +153,10 @@ void loop_foc_thread(void *pvParameters)
       motors_enabled.store(false);
     }
 
-    // loop simplefoc
-    motor0.move(motor0_target.load());
+    // // loop simplefoc
+    motor0.move(target0.load());
     motor0.loopFOC();
-    motor1.move(motor1_target.load());
+    motor1.move(target1.load());
     motor1.loopFOC();
 
     imu.loop();
@@ -180,7 +180,7 @@ void servoTaskCallback(void *pvParameters) {
 void setup()
 {
   Serial.begin(115200);
-  delay(1000);//was 5 seconds, because why?
+  delay(5000);//was 5 seconds, because why?
   Serial.println("Starting setup...");
   Serial.print("Version: ");
   Serial.println(VERSION);
@@ -191,7 +191,7 @@ void setup()
   // Init and calibrate the IMU
   imu.init(true);
 
-  ArduinoOTA.setHostname(NAME);
+  ArduinoOTA.setHostname("snap");
   ArduinoOTA.onStart(
       []()
       {
@@ -278,8 +278,8 @@ void setup()
   motor1.torque_controller = TorqueControlType::voltage;
 
   // set pid values for velocity controller
-  motor0.PID_velocity.P = 0.5;
-  motor0.PID_velocity.I = 20;
+  motor0.PID_velocity.P = 1;
+  motor0.PID_velocity.I = 3;
   motor0.PID_velocity.D = 0.001;
   motor0.PID_velocity.output_ramp = 5; //VERY IMPORTANT SAFTEY FEATURE sets jerk to be this rad/s^3 (5 is good)
   motor0.velocity_limit = 500; // rad/s, max rpm is about this
@@ -293,8 +293,8 @@ void setup()
   motor0.initFOC();
 
   // set pid values for velocity controller
-  motor1.PID_velocity.P = 0.5;
-  motor1.PID_velocity.I = 20;
+  motor1.PID_velocity.P = 1;
+  motor1.PID_velocity.I = 3;
   motor1.PID_velocity.D = 0.001;
   motor1.PID_velocity.output_ramp = 5; //VERY IMPORTANT SAFTEY FEATURE sets jerk to be this rad/s^3 (5 is good)
   motor1.velocity_limit = 500; // rad/s, max rpm is about this

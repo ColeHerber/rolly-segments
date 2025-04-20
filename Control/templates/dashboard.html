@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lovely Web Guy</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body style="font-family: sans-serif; padding: 2rem;">
+  <h1>💖 Lovely Web Guy Dashboard</h1>
+
+  <h2>📊 Live Telemetry</h2>
+  <pre id="telemetry">Waiting for data...</pre>
+
+  <h2>🛠️ Send Command</h2>
+  <form id="commandForm">
+    <label>Motor0 Target: <input type="number" name="motor0 target"></label><br>
+    <label>Mode: <input type="number" name="mode"></label><br>
+    <label>vel_p: <input type="number" step="0.01" name="vel_p"></label><br>
+    <label>Enable? <input type="checkbox" name="enable"></label><br>
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const socket = io();
+
+    socket.on("telemetry", data => {
+      document.getElementById("telemetry").textContent = JSON.stringify(data, null, 2);
+    });
+
+    document.getElementById("commandForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const json = {};
+      formData.forEach((val, key) => {
+        json[key] = (key === "enable") ? true : isNaN(val) ? val : parseFloat(val);
+      });
+
+      const res = await fetch("/send", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(json)
+      });
+      const result = await res.json();
+      alert(result.success ? "✅ Command sent!" : "❌ Failed.");
+    };
+  </script>
+</body>
+</html>
