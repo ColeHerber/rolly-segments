@@ -103,13 +103,12 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
     else if (strstr(topic, "cmd/") != NULL) {
         StaticJsonDocument<512> doc;
         deserializeJson(doc, message);
-
-        if (doc.containsKey("motor0")) {
-            target0.store(doc["motor0"].as<float>());
-            Serial.println(doc["motor0"].as<float>());
+        Serial.println("hello");
+        if (doc.containsKey("target0")) {
+            target0.store(doc["target0"].as<float>());
         }
-        if (doc.containsKey("motor1")) {
-            target1.store(doc["motor1"].as<float>());
+        if (doc.containsKey("target1")) {
+            target1.store(doc["target1"].as<float>());
         }
         if (doc.containsKey("mode")) {
             last_commanded_mode.store(doc["mode"].as<uint>());
