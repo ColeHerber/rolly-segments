@@ -22,8 +22,6 @@ enable_flag = True
 
 from paho.mqtt import client as mqtt_client
 
-
-
 broker = 'rollyserver.local'
 port = 1883
 topic = "rolly/cmd"
@@ -52,13 +50,21 @@ def connect_mqtt():
     return client
 
 
-def publish(client, msg):
-    result = client.publish(topic, msg)
-    # result: [0, 1]
-    status = result[0]
-    if result > 0:
-        print("error %i \n",result)
-   
+def publish(client,):
+    msg_count = 1
+    while True:
+        time.sleep(1)
+        msg = f"messages: {msg_count}"
+        result = client.publish(topic, msg)
+        # result: [0, 1]
+        status = result[0]
+        if status == 0:
+            print(f"Send `{msg}` to topic `{topic}`")
+        else:
+            print(f"Failed to send message to topic {topic}")
+        msg_count += 1
+        if msg_count > 5:
+            break
 
 # Input callback: only print the variable being updated
 def input_callback(sender, app_data, user_data):
@@ -80,6 +86,9 @@ def toggle_enable():
     print(f"enable: {enable_flag}")
 
 # GUI setup
+dpg.create_context()
+dpg.create_viewport(title="Control Panel", width=700, height=350)
+
 with dpg.window(label="Edit Parameters", width=680, height=330) as main_window:
     dpg.add_text("Motor / Servo Configurator", color=(255, 255, 0))
     dpg.add_separator()
@@ -106,8 +115,10 @@ with dpg.window(label="Edit Parameters", width=680, height=330) as main_window:
 
 
 def run():
-    dpg.create_context()
-    dpg.create_viewport(title="Control Panel", width=700, height=350)
+    client = connect_mqtt()
+    client.loop_start()
+    publish(client)
+    client.loop_stop()
 
     # Start GUI
     dpg.setup_dearpygui()
@@ -116,9 +127,7 @@ def run():
     dpg.start_dearpygui()
     dpg.destroy_context()
 
-    client = connect_mqtt()
-    client.loop_start()
-    publish(client)
-    client.loop_stop()
-    
-run()
+
+
+if __name__ == "__main__":
+    run()
