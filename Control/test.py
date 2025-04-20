@@ -50,21 +50,14 @@ def connect_mqtt():
     return client
 
 
-def publish(client,):
-    msg_count = 1
-    while True:
-        time.sleep(1)
-        msg = f"messages: {msg_count}"
-        result = client.publish(topic, msg)
-        # result: [0, 1]
-        status = result[0]
-        if status == 0:
-            print(f"Send `{msg}` to topic `{topic}`")
-        else:
-            print(f"Failed to send message to topic {topic}")
-        msg_count += 1
-        if msg_count > 5:
-            break
+def publish(client,msg):
+    result = client.publish(topic, msg)
+    status = result[0]
+    if status == 0:
+        print(f"Send `{msg}` to topic `{topic}`")
+    else:
+        print(f"Failed to send message to topic {topic}")
+
 
 # Input callback: only print the variable being updated
 def input_callback(sender, app_data, user_data):
@@ -74,9 +67,11 @@ def input_callback(sender, app_data, user_data):
             variables[key] = int(app_data)
         else:
             variables[key] = float(app_data)
-        print(f"{key}: {variables[key]}")
+        msg = f"{key}: {variables[key]}"
+        publish(client, msg)
     except ValueError:
         pass
+    
 
 # Enable/Disable toggle button
 def toggle_enable():
@@ -96,6 +91,7 @@ with dpg.window(label="Edit Parameters", width=680, height=330) as main_window:
     # Grouping variables side by side (3 per row)
     items_per_row = 3
     keys = list(variables.keys())
+    
 
     for i in range(0, len(keys), items_per_row):
         row_keys = keys[i:i + items_per_row]
@@ -114,20 +110,13 @@ with dpg.window(label="Edit Parameters", width=680, height=330) as main_window:
     dpg.add_button(label="Exit", callback=lambda: dpg.stop_dearpygui())
 
 
-def run():
-    client = connect_mqtt()
-    client.loop_start()
-    publish(client)
-    client.loop_stop()
+client = connect_mqtt()
+client.loop_start()
+client.loop_stop()
 
-    # Start GUI
-    dpg.setup_dearpygui()
-    dpg.show_viewport()
-    dpg.set_primary_window(main_window, True)
-    dpg.start_dearpygui()
-    dpg.destroy_context()
-
-
-
-if __name__ == "__main__":
-    run()
+# Start GUI
+dpg.setup_dearpygui()
+dpg.show_viewport()
+dpg.set_primary_window(main_window, True)
+dpg.start_dearpygui()
+dpg.destroy_context()
