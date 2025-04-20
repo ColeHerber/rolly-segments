@@ -65,8 +65,12 @@ def input_callback(sender, app_data, user_data):
         else:
             variables[key] = float(app_data)
         msg = f"{key}: {variables[key]}"
+<<<<<<< HEAD
 
         publish(client, json.dumps(variables, separators=(',', ':')))
+=======
+        publish(client, msg)
+>>>>>>> 4acb9e5 (Ok this might work, need to be back near router to test :))
     except ValueError:
         pass
     

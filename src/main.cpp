@@ -13,10 +13,10 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.260"   // updated dynamically from python script
+#define VERSION "1.0.276"   // updated dynamically from python script
 
-#include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
+
 
 // motor parameters
 int pole_pairs = 7;
@@ -157,8 +157,8 @@ void loop_foc_thread(void *pvParameters)
     // motor0.move(target0.load());
     
     // motor0.loopFOC();
-    motor1.move(target1.load());
-    motor1.loopFOC();
+    // motor1.move(target1.load());
+    // motor1.loopFOC();
 
     imu.loop();
   }
@@ -192,7 +192,7 @@ void setup()
   // Init and calibrate the IMU
   imu.init(true);
 
-  ArduinoOTA.setHostname("snap");
+  ArduinoOTA.setHostname(NAME);
   ArduinoOTA.onStart(
       []()
       {
@@ -249,7 +249,7 @@ void setup()
   digitalWrite(LED_BUILTIN, LOW);
 
   hspi.begin(ENC_SCL, ENC_SDA, ENC_MOSI);
-  // delay(1000); // I do not think we need to delay here
+  delay(1000); // I do not think we need to delay here
   // initialize encoder
   encoder0.init(&hspi);
   // calibrated sensor
