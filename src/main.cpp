@@ -11,41 +11,39 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.83"   // updated dynamically from python script
+#define VERSION "1.0.88"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
 
 // motor parameters
 int pole_pairs = 7;
-float phase_resistance = 3.6;
-float kv = 85;
+float phase_resistance = 3.5;
+float kv = 82.5;
 
-// Setup the motor and driver
-BLDCMotor motor = BLDCMotor(pole_pairs, phase_resistance, kv);
-BLDCDriver6PWM driver =
-    BLDCDriver6PWM(CH1_UH, CH1_UL, CH1_VH, CH1_VL, CH1_WH, CH1_WL);
+// Setup the motor and driver0
+BLDCMotor motor0 = BLDCMotor(pole_pairs, phase_resistance, kv);
+BLDCDriver6PWM driver0 =
+    BLDCDriver6PWM(CH0_UH, CH0_UL, CH0_VH, CH0_VL, CH0_WH, CH0_WL);
 
 // make encoder for simplefoc
 SPIClass hspi = SPIClass(HSPI);
-MagneticSensorMT6701SSI encoder0(CH1_ENC_CS);
+MagneticSensorMT6701SSI encoder0(CH0_ENC_CS);
+MagneticSensorMT6701SSI encoder1(CH1_ENC_CS);
+
 
 // calibrated sensor object from simplefoc
-CalibratedSensor sensor = CalibratedSensor(encoder0);
+CalibratedSensor sensor0 = CalibratedSensor(encoder0);
 
 // IMU
 Imu::Imu imu;
 
 // global atomic variable for the motor stuff to be set by mqtt
 std::atomic<float> last_commanded_target = 0;
-std::atomic<float> command_vel_p_gain = 0;
-std::atomic<float> command_vel_i_gain = 0;
-std::atomic<float> command_vel_d_gain = 0;
-std::atomic<float> command_vel_lpf = 0;
-std::atomic<float> command_pos_p_gain = 0;
-std::atomic<float> command_pos_i_gain = 0;
-std::atomic<float> command_pos_d_gain = 0;
-std::atomic<float> command_pos_lpf = 0;
+std::atomic<float> command_vel_p_gain = 0.025;
+std::atomic<float> command_vel_i_gain = 0.3;
+std::atomic<float> command_vel_d_gain = 0.0;
+std::atomic<float> command_vel_lpf = 0.0001;
 
 std::atomic<bool> enable_flag = false;
 std::atomic<bool> disable_flag = true;
@@ -78,21 +76,17 @@ void mqtt_publish_thread(void *pvParameters)
       StaticJsonDocument<512> doc;
 
       // print target of foc
-      doc["target"] = motor.target;
+      doc["target"] = motor0.target;
       // print the encoder position
-      doc["pos"] = motor.shaft_angle;
+      doc["pos"] = motor0.shaft_angle;
       // print the encoder velocity
-      doc["vel"] = motor.shaft_velocity;
+      doc["vel"] = motor0.shaft_velocity;
 
       // print the gains
-      doc["vel_p"] = motor.PID_velocity.P;
-      doc["vel_i"] = motor.PID_velocity.I;
-      doc["vel_d"] = motor.PID_velocity.D;
-      doc["vel_lpf"] = motor.LPF_velocity.Tf;
-      doc["pos_p"] = motor.P_angle.P;
-      doc["pos_i"] = motor.P_angle.I;
-      doc["pos_d"] = motor.P_angle.D;
-      doc["pos_lpf"] = motor.LPF_angle.Tf;
+      doc["vel_p"] = motor0.PID_velocity.P;
+      doc["vel_i"] = motor0.PID_velocity.I;
+      doc["vel_d"] = motor0.PID_velocity.D;
+      doc["vel_lpf"] = motor0.LPF_velocity.Tf;
       Imu::gravity_vector_t gravity = imu.get_gravity_vector();
       doc["gravity_x"] = gravity.x;
       doc["gravity_y"] = gravity.y;
@@ -117,21 +111,21 @@ void loop_foc_thread(void *pvParameters)
     if (enable_flag)
     {
       //   Serial.println("Motors are enabled");
-      motor.enable();
+      motor0.enable();
       enable_flag.store(false);
       motors_enabled.store(true);
     }
     else if (disable_flag)
     {
       //   Serial.println("Motors are disabled");
-      motor.disable();
+      motor0.disable();
       disable_flag.store(false);
       motors_enabled.store(false);
     }
 
     // loop simplefoc
-    motor.move(last_commanded_target.load());
-    motor.loopFOC();
+    motor0.move(last_commanded_target.load());
+    motor0.loopFOC();
 
     imu.loop();
   }
@@ -212,38 +206,37 @@ void setup()
   // initialize encoder
   encoder0.init(&hspi);
   // calibrated sensor
-  motor.linkSensor(&sensor);
 
-  // motor driver setup
-  driver.voltage_power_supply = 16;
-  driver.voltage_limit = 16;
-  driver.init();
+  // motor driver0 setup
+  driver0.voltage_power_supply = 16;
+  driver0.voltage_limit = 16;
+  driver0.init();
 
-  // link motor to driver and set up
-  motor.linkDriver(&driver);
-  // motor.voltage_sensor_align = 0.25;
-  motor.current_limit = 5;
-  motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
-  motor.torque_controller = TorqueControlType::voltage;
+  // link motor to driver0 and set up
+  motor0.linkDriver(&driver0);
+  // motor0.voltage_sensor_align = 0.25;
+  motor0.current_limit = 5;
+  motor0.foc_modulation = FOCModulationType::SpaceVectorPWM;
+  motor0.torque_controller = TorqueControlType::voltage;
 
   // set pid values for velocity controller
-  motor.PID_velocity.P = 1;
-  motor.PID_velocity.I = 5;
-  motor.PID_velocity.D = 0;
-  motor.PID_velocity.output_ramp = 500;
-  motor.PID_velocity.limit = 100;
-  motor.LPF_velocity.Tf = 0.01;
-  motor.P_angle.P = 10;
-  motor.controller = MotionControlType::velocity;
+  motor0.PID_velocity.P = 1;
+  motor0.PID_velocity.I = 5;
+  motor0.PID_velocity.D = 0;
+  motor0.PID_velocity.output_ramp = 500;
+  motor0.PID_velocity.limit = 100;
+  motor0.LPF_velocity.Tf = 0.01;
+  motor0.P_angle.P = 10;
+  motor0.controller = MotionControlType::velocity;
 
-  motor.init();
+  motor0.init();
 
   // align sensor and start FOC
   // sensor.voltage_calibration = 0.5;
   // sensor.calibrate(motor);
-  motor.linkSensor(&sensor);
+  motor0.linkSensor(&sensor0);
 
-  motor.initFOC();
+  motor0.initFOC();
 
   setupMQTT();                                 // Call our MQTT setup function
   xTaskCreatePinnedToCore(mqtt_publish_thread, /* Task function. */
@@ -265,7 +258,7 @@ void loop()
 {
   // if commands have changed, disable the motor, update the values, and
   // re-enable the motor
-  if (last_commanded_mode.load() != motor.controller)
+  if (last_commanded_mode.load() != motor0.controller)
   {
     disable_flag.store(true);
     delay(1);
@@ -278,16 +271,16 @@ void loop()
     switch (controlmode)
     {
       case 0:
-        motor.controller = MotionControlType::velocity;
+        motor0.controller = MotionControlType::velocity;
         break;
       case 1:
-        motor.controller = MotionControlType::torque;
+        motor0.controller = MotionControlType::torque;
         break;
       case 2:
-        motor.controller = MotionControlType::velocity_openloop;
+        motor0.controller = MotionControlType::velocity_openloop;
         break;
       default:
-        motor.controller = MotionControlType::velocity;
+        motor0.controller = MotionControlType::velocity;
         break;
     }
     enable_flag.store(true);
@@ -295,14 +288,10 @@ void loop()
 
   //   if the gains have changed, disable the motor, update the values, and
   //   re-enable the motor
-  if ((command_vel_p_gain.load() != motor.PID_velocity.P) ||
-      (command_vel_i_gain.load() != motor.PID_velocity.I) ||
-      (command_vel_d_gain.load() != motor.PID_velocity.D) ||
-      (command_vel_lpf.load() != motor.LPF_velocity.Tf) ||
-      (command_pos_p_gain.load() != motor.P_angle.P) ||
-      (command_pos_i_gain.load() != motor.P_angle.I) ||
-      (command_pos_d_gain.load() != motor.P_angle.D) ||
-      (command_pos_lpf.load() != motor.LPF_angle.Tf))
+  if ((command_vel_p_gain.load() != motor0.PID_velocity.P) ||
+      (command_vel_i_gain.load() != motor0.PID_velocity.I) ||
+      (command_vel_d_gain.load() != motor0.PID_velocity.D) ||
+      (command_vel_lpf.load() != motor0.LPF_velocity.Tf) )
   {
     disable_flag.store(true);
     delay(1);
@@ -311,14 +300,10 @@ void loop()
       vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 
-    motor.PID_velocity.P = command_vel_p_gain.load();
-    motor.PID_velocity.I = command_vel_i_gain.load();
-    motor.PID_velocity.D = command_vel_d_gain.load();
-    motor.LPF_velocity.Tf = command_vel_lpf.load();
-    motor.P_angle.P = command_pos_p_gain.load();
-    motor.P_angle.I = command_pos_i_gain.load();
-    motor.P_angle.D = command_pos_d_gain.load();
-    motor.LPF_angle.Tf = command_pos_lpf.load();
+    motor0.PID_velocity.P = command_vel_p_gain.load();
+    motor0.PID_velocity.I = command_vel_i_gain.load();
+    motor0.PID_velocity.D = command_vel_d_gain.load();
+    motor0.LPF_velocity.Tf = command_vel_lpf.load();
     enable_flag.store(true);
   }
 

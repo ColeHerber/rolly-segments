@@ -24,10 +24,6 @@ extern std::atomic<float> command_vel_p_gain;
 extern std::atomic<float> command_vel_i_gain;
 extern std::atomic<float> command_vel_d_gain;
 extern std::atomic<float> command_vel_lpf;
-extern std::atomic<float> command_pos_p_gain;
-extern std::atomic<float> command_pos_i_gain;
-extern std::atomic<float> command_pos_d_gain;
-extern std::atomic<float> command_pos_lpf;
 
 void setupMQTT() {
     client.setServer(mqtt_server, mqtt_port);
@@ -111,18 +107,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         }
         if (doc.containsKey("vel_lpf")) {
             command_vel_lpf.store(doc["vel_lpf"].as<float>());
-        }
-        if (doc.containsKey("pos_p")) {
-            command_pos_p_gain.store(doc["pos_p"].as<float>());
-        }
-        if (doc.containsKey("pos_i")) {
-            command_pos_i_gain.store(doc["pos_i"].as<float>());
-        }
-        if (doc.containsKey("pos_d")) {
-            command_pos_d_gain.store(doc["pos_d"].as<float>());
-        }
-        if (doc.containsKey("pos_lpf")) {
-            command_pos_lpf.store(doc["pos_lpf"].as<float>());
         }
         if (doc.containsKey("enable")) {
             enable_flag.store(doc["enable"].as<bool>());
