@@ -11,7 +11,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.71"   // updated dynamically from python script
+#define VERSION "1.0.83"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -48,11 +48,11 @@ std::atomic<float> command_pos_d_gain = 0;
 std::atomic<float> command_pos_lpf = 0;
 
 std::atomic<bool> enable_flag = false;
-std::atomic<bool> disable_flag = false;
+std::atomic<bool> disable_flag = true;
 std::atomic<bool> motors_enabled = false;
 
 // 0 for torque, 1 for velocity, 2 for position
-std::atomic<uint> last_commanded_mode = 0;
+std::atomic<uint> last_commanded_mode = 1;
 
 // make a separate thread for the OTA
 TaskHandle_t loop_foc_task;
@@ -221,7 +221,8 @@ void setup()
 
   // link motor to driver and set up
   motor.linkDriver(&driver);
-  // motor.voltage_sensor_align = 0.5;
+  // motor.voltage_sensor_align = 0.25;
+  motor.current_limit = 5;
   motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
   motor.torque_controller = TorqueControlType::voltage;
 
@@ -229,8 +230,8 @@ void setup()
   motor.PID_velocity.P = 1;
   motor.PID_velocity.I = 5;
   motor.PID_velocity.D = 0;
-  motor.PID_velocity.output_ramp = 5;
-  motor.PID_velocity.limit = 300;
+  motor.PID_velocity.output_ramp = 500;
+  motor.PID_velocity.limit = 100;
   motor.LPF_velocity.Tf = 0.01;
   motor.P_angle.P = 10;
   motor.controller = MotionControlType::velocity;
@@ -238,8 +239,8 @@ void setup()
   motor.init();
 
   // align sensor and start FOC
-  sensor.voltage_calibration = 0.5;
-  sensor.calibrate(motor);
+  // sensor.voltage_calibration = 0.5;
+  // sensor.calibrate(motor);
   motor.linkSensor(&sensor);
 
   motor.initFOC();

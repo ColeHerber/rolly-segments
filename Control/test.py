@@ -7,13 +7,11 @@ import dearpygui.dearpygui as dpg
 import json
 # Define all variables
 variables = {
-    "target": 0.0,
-    "vel_p": 0.0,
-    "vel_i": 0.0,
+    "target": 3,
+    "vel_p": 0.025,
+    "vel_i": 0.3,
     "vel_d": 0.0,
     "vel_lpf": 0.0,
-    "enable": False,
-    "disable": True
 }
 input_ids = {}
 enable_flag = False
@@ -66,7 +64,7 @@ def input_callback(sender, app_data, user_data):
         else:
             variables[key] = float(app_data)
 
-        publish(client, json.dumps(variables, separators=(',', ':')))
+        publish(client, json.dumps({key:variables[key]}, separators=(',', ':')))
     except ValueError:
         pass
     
@@ -77,13 +75,13 @@ def toggle_enable():
     enable_flag = not enable_flag
     dpg.set_value("enable_button", f"Enabled: {enable_flag}")
     if enable_flag:
-       variables["enable"] = True
-       variables["disable"] = False
-    else:
-       variables["enable"] = False
-       variables["disable"] = True
+       publish(client, json.dumps({"enable":True}, separators=(',', ':')))
+       publish(client, json.dumps({"disable":False}, separators=(',', ':')))
 
-    publish(client, json.dumps(variables, separators=(',', ':')))
+    else:
+        publish(client, json.dumps({"enable":False}, separators=(',', ':')))
+        publish(client, json.dumps({"disable":True}, separators=(',', ':')))
+
 
 # GUI setup
 dpg.create_context()
