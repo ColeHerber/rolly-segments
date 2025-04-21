@@ -8,7 +8,6 @@ import json
 # Define all variables
 variables = {
     "target": 0.0,
-    "mode": "velocity",
     "vel_p": 0.0,
     "vel_i": 0.0,
     "vel_d": 0.0,
@@ -85,7 +84,7 @@ def toggle_enable():
        variables["disable"] = True
 
     publish(client, json.dumps(variables, separators=(',', ':')))
-    
+
 # GUI setup
 dpg.create_context()
 dpg.create_viewport(title="Control Panel", width=700, height=350)

@@ -11,24 +11,24 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.46"   // updated dynamically from python script
+#define VERSION "1.0.71"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
 
 // motor parameters
-int pole_pairs = 11;
-float phase_resistance = 0.1088;
-float kv = 500;
+int pole_pairs = 7;
+float phase_resistance = 3.6;
+float kv = 85;
 
 // Setup the motor and driver
 BLDCMotor motor = BLDCMotor(pole_pairs, phase_resistance, kv);
 BLDCDriver6PWM driver =
-    BLDCDriver6PWM(CH0_UH, CH0_UL, CH0_VH, CH0_VL, CH0_WH, CH0_WL);
+    BLDCDriver6PWM(CH1_UH, CH1_UL, CH1_VH, CH1_VL, CH1_WH, CH1_WL);
 
 // make encoder for simplefoc
 SPIClass hspi = SPIClass(HSPI);
-MagneticSensorMT6701SSI encoder0(CH0_ENC_CS);
+MagneticSensorMT6701SSI encoder0(CH1_ENC_CS);
 
 // calibrated sensor object from simplefoc
 CalibratedSensor sensor = CalibratedSensor(encoder0);
@@ -221,16 +221,16 @@ void setup()
 
   // link motor to driver and set up
   motor.linkDriver(&driver);
-  motor.voltage_sensor_align = 0.5;
+  // motor.voltage_sensor_align = 0.5;
   motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
   motor.torque_controller = TorqueControlType::voltage;
 
   // set pid values for velocity controller
-  motor.PID_velocity.P = 0.01;
-  motor.PID_velocity.I = 1;
+  motor.PID_velocity.P = 1;
+  motor.PID_velocity.I = 5;
   motor.PID_velocity.D = 0;
-  motor.PID_velocity.output_ramp = 1000;
-  motor.PID_velocity.limit = 5000;
+  motor.PID_velocity.output_ramp = 5;
+  motor.PID_velocity.limit = 300;
   motor.LPF_velocity.Tf = 0.01;
   motor.P_angle.P = 10;
   motor.controller = MotionControlType::velocity;
@@ -277,16 +277,16 @@ void loop()
     switch (controlmode)
     {
       case 0:
-        motor.controller = MotionControlType::torque;
+        motor.controller = MotionControlType::velocity;
         break;
       case 1:
-        motor.controller = MotionControlType::velocity;
+        motor.controller = MotionControlType::torque;
         break;
       case 2:
         motor.controller = MotionControlType::velocity_openloop;
         break;
       default:
-        motor.controller = MotionControlType::torque;
+        motor.controller = MotionControlType::velocity;
         break;
     }
     enable_flag.store(true);
