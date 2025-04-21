@@ -18,7 +18,8 @@ PubSubClient client(espClient);  // Define the client object
 // Define the atomic variables (allocate memory for them)
 extern std::atomic<bool> enable_flag;
 extern std::atomic<bool> disable_flag;
-extern std::atomic<float> last_commanded_target;
+extern std::atomic<float> last_commanded_target0;
+extern std::atomic<float> last_commanded_target1;
 extern std::atomic<uint> last_commanded_mode;
 extern std::atomic<float> command_vel_p_gain;
 extern std::atomic<float> command_vel_i_gain;
@@ -90,8 +91,11 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         StaticJsonDocument<512> doc;
         deserializeJson(doc, message);
 
-        if (doc.containsKey("target")) {
-            last_commanded_target.store(doc["target"].as<float>());
+        if (doc.containsKey("target0")) {
+            last_commanded_target0.store(doc["target0"].as<float>());
+        }
+        if (doc.containsKey("target1")) {
+            last_commanded_target1.store(doc["target1"].as<float>());
         }
         if (doc.containsKey("mode")) {
             last_commanded_mode.store(doc["mode"].as<uint>());
