@@ -11,7 +11,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.91"   // updated dynamically from python script
+#define VERSION "1.0.98"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -223,6 +223,8 @@ void setup()
   delay(1000);
   // initialize encoder
   encoder0.init(&hspi);
+  encoder1.init(&hspi);
+
   // calibrated sensor
 
   // motor driver0 setup
@@ -242,19 +244,19 @@ void setup()
   motor0.foc_modulation = FOCModulationType::SpaceVectorPWM;
   motor0.torque_controller = TorqueControlType::voltage;
 
-   // link motor to driver0 and set up
-   motor1.linkDriver(&driver1);
-   // motor0.voltage_sensor_align = 0.25;
-   motor1.current_limit = 5;
-   motor1.foc_modulation = FOCModulationType::SpaceVectorPWM;
-   motor1.torque_controller = TorqueControlType::voltage;
+  // link motor to driver0 and set up
+  motor1.linkDriver(&driver1);
+  // motor0.voltage_sensor_align = 0.25;
+  motor1.current_limit = 5;
+  motor1.foc_modulation = FOCModulationType::SpaceVectorPWM;
+  motor1.torque_controller = TorqueControlType::voltage;
  
 
   // set pid values for velocity controller
   motor0.PID_velocity.P = 0.025;
   motor0.PID_velocity.I = 0.3;
   motor0.PID_velocity.D = 0;
-  motor0.PID_velocity.output_ramp = 500;
+  motor0.PID_velocity.output_ramp = 50;
   motor0.PID_velocity.limit = 100;
   motor0.LPF_velocity.Tf = 0.01;
   motor0.P_angle.P = 10;
@@ -270,9 +272,9 @@ void setup()
   motor1.PID_velocity.P = 0.025;
   motor1.PID_velocity.I = 0.3;
   motor1.PID_velocity.D = 0;
-  motor1.PID_velocity.output_ramp = 500;
+  motor1.PID_velocity.output_ramp = 50;
   motor1.PID_velocity.limit = 100;
-  motor1.LPF_velocity.Tf = 0.01;
+  motor1.LPF_velocity.Tf = 0.001;
   motor1.P_angle.P = 10;
   motor1.controller = MotionControlType::velocity;
 
@@ -281,7 +283,7 @@ void setup()
   // align sensor and start FOC
   // sensor.voltage_calibration = 0.5;
   // sensor.calibrate(motor);
-  motor1.linkSensor(&sensor0);
+  motor1.linkSensor(&sensor1);
 
   motor1.initFOC();
 
