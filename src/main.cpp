@@ -11,7 +11,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.98"   // updated dynamically from python script
+#define VERSION "1.0.127"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -48,14 +48,14 @@ Imu::Imu imu;
 std::atomic<float> last_commanded_target0 = 0;
 std::atomic<float> last_commanded_target1 = 0;
 
-std::atomic<float> command_vel_p_gain = 0.025;
-std::atomic<float> command_vel_i_gain = 0.3;
+std::atomic<float> command_vel_p_gain = 0.05;
+std::atomic<float> command_vel_i_gain = 0.5;
 std::atomic<float> command_vel_d_gain = 0.0;
 std::atomic<float> command_vel_lpf = 0.0001;
 
-std::atomic<bool> enable_flag = false;
-std::atomic<bool> disable_flag = true;
-std::atomic<bool> motors_enabled = false;
+std::atomic<bool> enable_flag = true;
+std::atomic<bool> disable_flag = false;
+std::atomic<bool> motors_enabled = true;
 
 // 0 for torque, 1 for velocity, 2 for position
 std::atomic<uint> last_commanded_mode = 1;
@@ -64,7 +64,7 @@ std::atomic<uint> last_commanded_mode = 1;
 TaskHandle_t loop_foc_task;
 // make a separate thread for the MQTT publishing
 TaskHandle_t mqtt_publish_task;
-const int interval_ms = 500;
+const int interval_ms = 100;
 void mqtt_publish_thread(void *pvParameters)
 {
   while (1)
@@ -100,9 +100,12 @@ void mqtt_publish_thread(void *pvParameters)
       doc["vel_d"] = motor0.PID_velocity.D;
       doc["vel_lpf"] = motor0.LPF_velocity.Tf;
       Imu::gravity_vector_t gravity = imu.get_gravity_vector();
-      doc["gravity_x"] = gravity.x;
-      doc["gravity_y"] = gravity.y;
-      doc["gravity_z"] = gravity.z;
+      // doc["gravity_x"] = gravity.x;
+      // doc["gravity_y"] = gravity.y;
+      // doc["gravity_z"] = gravity.z;
+
+      doc["enabled"] = std::to_string(static_cast<int>(enable_flag));
+      doc["disabled"] = std::to_string(static_cast<int>(disable_flag));
 
       // Serialize JSON to string
       char buffer[512];
@@ -253,10 +256,10 @@ void setup()
  
 
   // set pid values for velocity controller
-  motor0.PID_velocity.P = 0.025;
+  motor0.PID_velocity.P = 0.3;
   motor0.PID_velocity.I = 0.3;
   motor0.PID_velocity.D = 0;
-  motor0.PID_velocity.output_ramp = 50;
+  motor0.PID_velocity.output_ramp = 100;
   motor0.PID_velocity.limit = 100;
   motor0.LPF_velocity.Tf = 0.01;
   motor0.P_angle.P = 10;
@@ -298,7 +301,7 @@ void setup()
                           1); /* Core 1 because wifi runs on core 0 */
 
   // task for arduinoOTA
-  xTaskCreatePinnedToCore(loop_foc_thread, "loop_foc", 10000, NULL, 1,
+  xTaskCreatePinnedToCore(loop_foc_thread, "loop_foc", 10000, NULL, 2,
                           &loop_foc_task, 1);
 
   Serial.println("Setup complete.");
@@ -310,6 +313,7 @@ void loop()
   // re-enable the motor
   if (last_commanded_mode.load() != motor0.controller)
   {
+    enable_flag.store(false);
     disable_flag.store(true);
     delay(1);
     while (motors_enabled.load())
@@ -338,6 +342,8 @@ void loop()
         break;
     }
     enable_flag.store(true);
+    disable_flag.store(false);
+
   }
 
   //   if the gains have changed, disable the motor, update the values, and
@@ -347,12 +353,12 @@ void loop()
       (command_vel_d_gain.load() != motor0.PID_velocity.D) ||
       (command_vel_lpf.load() != motor0.LPF_velocity.Tf) )
   {
-    disable_flag.store(true);
-    delay(1);
-    while (motors_enabled.load())
-    {
-      vTaskDelay(1 / portTICK_PERIOD_MS);
-    }
+    // disable_flag.store(true);
+    // delay(1);
+    // while (motors_enabled.load())
+    // {
+    //   vTaskDelay(1 / portTICK_PERIOD_MS);
+    // }
 
     motor0.PID_velocity.P = command_vel_p_gain.load();
     motor0.PID_velocity.I = command_vel_i_gain.load();
@@ -363,11 +369,10 @@ void loop()
     motor1.PID_velocity.I = command_vel_i_gain.load();
     motor1.PID_velocity.D = command_vel_d_gain.load();
     motor1.LPF_velocity.Tf = command_vel_lpf.load();
-
-    enable_flag.store(true);
+    // enable_flag.store(true);
   }
 
-  vTaskDelay(10 / portTICK_PERIOD_MS);
+  vTaskDelay(1 / portTICK_PERIOD_MS);
 
   //   Handle OTA updates
   ArduinoOTA.handle();

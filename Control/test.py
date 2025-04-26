@@ -9,7 +9,7 @@ import json
 variables = {
     "target0": 3,
     "target1": 3,
-    "vel_p": 0.025,
+    "vel_p": 0.3,
     "vel_i": 0.3,
     "vel_d": 0.0,
     "vel_lpf": 0.0,
