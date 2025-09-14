@@ -19,7 +19,7 @@ def on_message(client, userdata, msg):
         data = json.loads(msg.payload.decode())
         # print("\n📡 Telemetry:")
         # for key, value in data.items():
-            # print(f"  {key}: {value}")
+        #     print(f"  {key}: {value}")
 
     except Exception as e:
         print("❌ Failed to parse telemetry:", e)
@@ -30,56 +30,84 @@ client.on_message = on_message
 client.connect(MQTT_BROKER, MQTT_PORT, 60)
 client.loop_start()
 
-# Controller Setup
+"""
+Keyboard controls (requires a tiny Pygame window to capture input):
+  - W/Up: forward
+  - S/Down: reverse
+  - A/Left: turn left
+  - D/Right: turn right
+  - Space: stop (zero both motors)
+  - Esc or window close: quit
+Speeds are mapped to [-MAX_SPEED, MAX_SPEED].
+"""
+
+# Keyboard Setup
 pygame.init()
-pygame.joystick.init()
-
-if pygame.joystick.get_count() == 0:
-    print("❌ No controller found. Connect an Xbox controller and restart.")
-    exit()
-
-joystick = pygame.joystick.Joystick(0)
-joystick.init()
-print(f"🎮 Controller connected: {joystick.get_name()}")
-def apply_deadband(value, threshold=0.3):
-    return 0 if abs(value) < threshold else value
-
-def get_motor_values():
-    pygame.event.pump()
-
-    raw_y = -joystick.get_axis(1)  # Invert Y (forward is negative)
-    raw_x = joystick.get_axis(0)   # X is left/right turn
-
-    # Apply 30% deadband
-    y = apply_deadband(raw_y)
-    x = apply_deadband(raw_x)
-
-    # Clamp to [-1, 1] just in case
-    y = max(-1, min(1, y))
-    x = max(-1, min(1, x))
-
-    base_speed = y * 5
-    turn_adjust = x * 5
-
-    motor0 = round(base_speed - turn_adjust, 2)
-    motor1 = round(base_speed + turn_adjust, 2)
-
-    # Clamp motor values
-    motor0 = max(-5, min(5, motor0))
-    motor1 = max(-5, min(5, motor1))
-
-    return motor0, motor1# Main Loop
 try:
-    print("\n🔁 Streaming controller data. Press Enter anytime to enter PID values.")
+    # Create a small window so pygame can receive keyboard events
+    screen = pygame.display.set_mode((360, 120))
+    pygame.display.set_caption("Rolly Keyboard Control")
+except Exception:
+    # Fallback to headless if needed
+    pygame.display.init()
+
+MAX_SPEED = 6.0
+
+def get_motor_values_from_key(key):
+    """Return a single-shot (target0, target1) for a given key, or None.
+    Standard controls: WASD or arrows. Space = stop.
+    Enforces target1 = -target0.
+    """
+    # Stop
+    if key == pygame.K_SPACE:
+        return 0.0, 0.0
+
+    # Forward
+    if key in (pygame.K_w, pygame.K_UP):
+        t0 = MAX_SPEED
+        return t0, -t0
+
+    # Reverse
+    if key in (pygame.K_s, pygame.K_DOWN):
+        t0 = -MAX_SPEED
+        return t0, -t0
+
+    # Turn left (spin)
+    if key in (pygame.K_a, pygame.K_LEFT):
+        t0 = -MAX_SPEED
+        return t0, -t0
+
+    # Turn right (spin)
+    if key in (pygame.K_d, pygame.K_RIGHT):
+        t0 = MAX_SPEED
+        return t0, -t0
+
+    return None
+
+# Main Loop
+try:
+    print("\n🔁 Keyboard control: press keys to send one-shot commands. Space=stop, Esc=quit.")
+    pygame.key.set_repeat(0)  # Disable key repeat to avoid multiple KEYDOWNs
     while True:
-        motor0, motor1 = get_motor_values()
-        payload = {
-            "motor0": float(4),
-            "motor1": float(4),
-            "enable": True
-        }
-        client.publish(MQTT_PUB_TOPIC, json.dumps(payload))
-        print(f"🎮 Motor Command: motor0={motor0}, motor1={motor1}", end="\r")
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                raise KeyboardInterrupt
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    raise KeyboardInterrupt
+
+                result = get_motor_values_from_key(event.key)
+                if result is None:
+                    continue
+                target0, target1 = result
+                payload = {
+                    "target0": float(target0),
+                    "target1": float(target1),
+                    "enable": True
+
+                }
+                client.publish(MQTT_PUB_TOPIC, json.dumps(payload))
+                print(f"\n⌨️  Sent target0={target0}, target1={target1}", end="")
 
         # # Check if user wants to enter PID
         # if input("\n↩️  Press Enter to tune PID or Ctrl+C to quit: ") == "":
@@ -102,7 +130,7 @@ try:
         #     except Exception as e:
         #         print("❌ Invalid PID input:", e)
 
-        # time.sleep(0.1)
+        time.sleep(0.01)
 
 except KeyboardInterrupt:
     print("\n👋 Exiting...")

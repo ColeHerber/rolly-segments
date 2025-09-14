@@ -10,8 +10,9 @@ const char* mqtt_password = "pillbugs";
 const char* mqtt_topic = "rolly";         // General data topic
 
 const char* mqtt_sub_topic = "rolly/cmd/#"; // Subscribe topic
-const char* mqtt_ota_topic = "rolly/snap/ota/update";        // OTA topic
-const char* mqtt_ota_status_topic = "rolly/snap/ota/status";      // OTA Status
+const char* mqtt_command_topic = "[rolly/cmd]"; // command topic
+const char* mqtt_ota_topic = "rolly/crackle/ota/update";        // OTA topic
+const char* mqtt_ota_status_topic = "rolly/crackle/ota/status";      // OTA Status
 
 
 // const char* mqtt_sub_topic = ("rolly/"+ std::string(NAME) +"/#").c_str(); // Subscribe topic
@@ -24,15 +25,8 @@ PubSubClient client(espClient);  // Define the client object
 // Define the atomic variables (allocate memory for them)
 extern std::atomic<bool> enable_flag;
 extern std::atomic<bool> disable_flag;
-extern std::atomic<float> target0;
-extern std::atomic<float> target1;
-
-
-extern std::atomic<float> servo3_pos;
-extern std::atomic<float> servo0_pos;
-extern std::atomic<float> servo1_pos;
-extern std::atomic<float> servo2_pos;
-
+extern std::atomic<float> last_commanded_target0;
+extern std::atomic<float> last_commanded_target1;
 extern std::atomic<uint> last_commanded_mode;
 extern std::atomic<float> command_vel_p_gain;
 extern std::atomic<float> command_vel_i_gain;
@@ -91,7 +85,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
     char message[length + 1];
     memcpy(message, payload, length);
     message[length] = '\0';
-    Serial.println(message);
+    Serial.println(mqtt_sub_topic);
 
     if (strcmp(topic, mqtt_ota_topic) == 0) {
         if (strcmp(message, "update") == 0) {
@@ -99,16 +93,17 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
             publishMQTT("Starting OTA update", mqtt_ota_status_topic);
         }
     } 
+
     // else if topic string contains "cmd/"
-    else if (strstr(topic, "cmd/") != NULL) {
+    else if (strcmp(topic, mqtt_command_topic)) {
         StaticJsonDocument<512> doc;
         deserializeJson(doc, message);
         Serial.println("hello");
         if (doc.containsKey("target0")) {
-            target0.store(doc["target0"].as<float>());
+            last_commanded_target0.store(doc["target0"].as<float>());
         }
         if (doc.containsKey("target1")) {
-            target1.store(doc["target1"].as<float>());
+            last_commanded_target1.store(doc["target1"].as<float>());
         }
         if (doc.containsKey("mode")) {
             last_commanded_mode.store(doc["mode"].as<uint>());
@@ -130,18 +125,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         }
         if (doc.containsKey("disable")) {
             disable_flag.store(doc["disable"].as<bool>());
-        }
-        if (doc.containsKey("servo0")) {
-            servo0_pos.store(doc["servo0"].as<float>());
-        }
-        if (doc.containsKey("servo1")) {
-            servo1_pos.store(doc["servo1"].as<float>());
-        }
-        if (doc.containsKey("servo2")) {
-            servo2_pos.store(doc["servo2"].as<float>());
-        }
-        if (doc.containsKey("servo3")) {
-            servo3_pos.store(doc["servo3"].as<float>());
         }
     }
 }
