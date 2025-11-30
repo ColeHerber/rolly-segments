@@ -11,7 +11,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "1.0.98"   // updated dynamically from python script
+#define VERSION "1.0.119"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -183,7 +183,7 @@ void setup()
       []()
       {
         // Stop motors on OTA
-        disable_flag.store(true);
+        disable_flag.stgore(true);
 
         // Wait to make sure they stop
         delay(100);

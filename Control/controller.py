@@ -17,9 +17,9 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     try:
         data = json.loads(msg.payload.decode())
-        # print("\n📡 Telemetry:")
-        # for key, value in data.items():
-            # print(f"  {key}: {value}")
+        print("\n📡 Telemetry:")
+        for key, value in data.items():
+            print(f"  {key}: {value}")
 
     except Exception as e:
         print("❌ Failed to parse telemetry:", e)
