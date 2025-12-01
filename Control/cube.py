@@ -88,8 +88,8 @@ class RollyControlPygame:
             self.input_boxes.append(InputBox(250, y_offset, 140, 32, key, label, text=defaults[key]))
             y_offset += 40
 
-        self.send_button = pygame.Rect(200, y_offset + 110, 140, 40)
-        self.enable_button = pygame.Rect(360, y_offset + 110, 140, 40)
+        self.send_button = pygame.Rect(200, y_offset + 40, 140, 40)
+        self.enable_button = pygame.Rect(360, y_offset + 40, 140, 40)
 
         # --- MQTT Client ---
         self.client = mqtt.Client()
@@ -114,18 +114,15 @@ class RollyControlPygame:
             self.telemetry_data = json.loads(msg.payload.decode())
 
             if not self.initial_values_set:
-                print("📝 Received first telemetry message. Populating fields...")
                 for box in self.input_boxes:
                     if box.key in self.telemetry_data:
                         new_text = str(self.telemetry_data[box.key])
                         box.text = new_text
                         box.txt_surface = FONT.render(box.text, True, COLOR_TEXT)
-                
+
                 if 'enable' in self.telemetry_data:
                     self.enabled = self.telemetry_data['enable']
-
                 self.initial_values_set = True
-                print("✅ Initial values populated from telemetry.")
         except Exception as e:
             print(f"❌ Failed to parse telemetry: {e}")
 
@@ -156,7 +153,7 @@ class RollyControlPygame:
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if self.send_button.collidepoint(event.pos):
+                if self.send_button and self.send_button.collidepoint(event.pos):
                     self.send_commands()
                 elif self.enable_button.collidepoint(event.pos):
                     self.toggle_enable()
@@ -173,7 +170,8 @@ class RollyControlPygame:
             screen.blit(no_data_text, (50, y_offset))
             return
 
-        for key, value in self.telemetry_data.items():
+        filtered = {k: v for k, v in self.telemetry_data.items() if not k.startswith("bal_")}
+        for key, value in filtered.items():
             text = f"{key}: {value}"
             telemetry_surface = FONT.render(text, True, COLOR_TEXT)
             screen.blit(telemetry_surface, (50, y_offset))
@@ -183,7 +181,7 @@ class RollyControlPygame:
 
     def draw(self):
         screen.fill(COLOR_BG)
-        
+
         # Draw input boxes
         for box in self.input_boxes:
             box.draw(screen)

@@ -12,7 +12,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "2.0.138"   // updated dynamically from python script
+#define VERSION "2.0.142"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -22,13 +22,13 @@ int pole_pairs = 7;
 float phase_resistance = 3.5;
 float kv = 82.5;
 
-// Global atomic variables for the balance PID gains for theta
+// Global atomic variables for the balance PID gains for theta error
 std::atomic<float> command_bal_p_gain_theta = 16;
-std::atomic<float> command_bal_i_gain_theta = 0;
-std::atomic<float> command_bal_d_gain_theta = 0;
+std::atomic<float> command_bal_i_gain_theta = 1;
+std::atomic<float> command_bal_d_gain_theta = -0.1;
 
 // Global atomic variables for the balance PID gains for theta_dot
-std::atomic<float> command_bal_p_gain_theta_dot = 1.2;
+std::atomic<float> command_bal_p_gain_theta_dot = 1.3;
 std::atomic<float> command_bal_i_gain_theta_dot = 0.0;
 std::atomic<float> command_bal_d_gain_theta_dot = 0.0;
 
@@ -136,7 +136,9 @@ void mqtt_publish_thread(void *pvParameters)
       StaticJsonDocument<512> doc;
 
       doc["target"] = motor.target;
-      doc["vel"] = motor.shaft_velocity;
+      float motor_speed = sensor.getVelocity(); // velocity from encoder
+      doc["vel"] = motor_speed;
+      doc["motor_speed"] = motor_speed;
 
       // Report gains from the manual PID object
       doc["bal_p_theta"] = balance_pid_manual_theta.P;
@@ -208,11 +210,10 @@ void loop_foc_thread(void *pvParameters)
       pitch_dot_filtered += alpha * (pitch_dot - pitch_dot_filtered);
       pitch_dot_global.store(pitch_dot_filtered);
 
-
-      float error_theta = zero_point.load() - pitch;
+      float error_theta = pitch - zero_point.load();
       float output_theta = balance_pid_manual_theta.compute(error_theta);
 
-      float error_theta_dot = 0 - pitch_dot_filtered;
+      float error_theta_dot = pitch_dot_filtered;
       float output_theta_dot = balance_pid_manual_theta_dot.compute(error_theta_dot);
 
       float target_velocity = output_theta + output_theta_dot;
