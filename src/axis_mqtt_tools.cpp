@@ -7,10 +7,10 @@ const char* mqtt_server = "rollyserver.local"; //  <<--- YOUR MQTT BROKER IP
 const int mqtt_port = 1883;
 const char* mqtt_user = NAME;
 const char* mqtt_password = "pillbugs";
-const char* mqtt_topic = "rolly";         // General data topic
-const char* mqtt_sub_topic = "rolly/cmd/#"; // Subscribe topic
-const char* mqtt_ota_topic = "rolly/ota/update";        // OTA topic
-const char* mqtt_ota_status_topic = "rolly/ota/status"; // OTA Status
+const char* mqtt_topic = "cubli";         // General data topic
+const char* mqtt_sub_topic = "cubli/cmd/#"; // Subscribe topic
+const char* mqtt_ota_topic = "cubli/ota/update";        // OTA topic
+const char* mqtt_ota_status_topic = "cubli/ota/status"; // OTA Status
 
 WiFiClient espClient;
 PubSubClient client(espClient);  // Define the client object
@@ -18,13 +18,15 @@ PubSubClient client(espClient);  // Define the client object
 // Define the atomic variables (allocate memory for them)
 extern std::atomic<bool> enable_flag;
 extern std::atomic<bool> disable_flag;
-extern std::atomic<float> last_commanded_target0;
-extern std::atomic<float> last_commanded_target1;
+extern std::atomic<float> last_commanded_target;
 extern std::atomic<uint> last_commanded_mode;
+extern std::atomic<float> command_bal_p_gain;
+extern std::atomic<float> command_bal_i_gain;
+extern std::atomic<float> command_bal_d_gain;
 extern std::atomic<float> command_vel_p_gain;
 extern std::atomic<float> command_vel_i_gain;
 extern std::atomic<float> command_vel_d_gain;
-extern std::atomic<float> command_vel_lpf;
+
 
 void setupMQTT() {
     client.setServer(mqtt_server, mqtt_port);
@@ -91,14 +93,20 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         StaticJsonDocument<512> doc;
         deserializeJson(doc, message);
 
-        if (doc.containsKey("target0")) {
-            last_commanded_target0.store(doc["target0"].as<float>());
-        }
-        if (doc.containsKey("target1")) {
-            last_commanded_target1.store(doc["target1"].as<float>());
+        if (doc.containsKey("target")) {
+            last_commanded_target.store(doc["target"].as<float>());
         }
         if (doc.containsKey("mode")) {
             last_commanded_mode.store(doc["mode"].as<uint>());
+        }
+        if (doc.containsKey("bal_p")) {
+            command_bal_p_gain.store(doc["bal_p"].as<float>());
+        }
+        if (doc.containsKey("bal_i")) {
+            command_bal_i_gain.store(doc["bal_i"].as<float>());
+        }
+        if (doc.containsKey("bal_d")) {
+            command_bal_d_gain.store(doc["bal_d"].as<float>());
         }
         if (doc.containsKey("vel_p")) {
             command_vel_p_gain.store(doc["vel_p"].as<float>());
@@ -108,9 +116,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         }
         if (doc.containsKey("vel_d")) {
             command_vel_d_gain.store(doc["vel_d"].as<float>());
-        }
-        if (doc.containsKey("vel_lpf")) {
-            command_vel_lpf.store(doc["vel_lpf"].as<float>());
         }
         if (doc.containsKey("enable")) {
             enable_flag.store(doc["enable"].as<bool>());
