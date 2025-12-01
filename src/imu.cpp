@@ -1,28 +1,48 @@
 #include "imu.h"
 #include "pins_arduino.h"
+#include <math.h>
 #include <Wire.h>
 
 // You can change the I2C address here for trial and error
 #define BNO08X_I2C_ADDR 0x4A
-// #define BNO08X_I2C_ADDR_2 0x4B
 
 namespace Imu
 {
+    // Private member to hold the last read rotation vector
+    RotationVector _last_rotation = {0, 0, 0};
+
+    // Conversion helper modeled after Adafruit example quaternionToEuler
+    static void quaternionToEuler(float qr, float qi, float qj, float qk, RotationVector *ypr, bool degrees = false)
+    {
+        const float sqr = sq(qr);
+        const float sqi = sq(qi);
+        const float sqj = sq(qj);
+        const float sqk = sq(qk);
+
+        ypr->k = atan2f(2.0f * (qi * qj + qk * qr), (sqi - sqj - sqk + sqr)); // yaw
+        ypr->j = asinf(-2.0f * (qi * qk - qj * qr) / (sqi + sqj + sqk + sqr)); // pitch
+        ypr->i = atan2f(2.0f * (qj * qk + qi * qr), (-sqi - sqj + sqk + sqr)); // roll
+
+        if (degrees)
+        {
+            ypr->i *= RAD_TO_DEG;
+            ypr->j *= RAD_TO_DEG;
+            ypr->k *= RAD_TO_DEG;
+        }
+    }
 
     Imu::Imu() {}
 
-void Imu::init()
+    void Imu::init()
     {
         // Start I2C bus
         Wire.begin(SDA, SCL);
         delay(1000);
         if (!bno08x.begin_I2C(BNO08X_I2C_ADDR))
         {
-            
             Serial.println("Failed to find BNO08x chip");
             while (1)
             {
-                
                 delay(10);
             }
         }
@@ -41,127 +61,39 @@ void Imu::init()
 
     void Imu::setReports()
     {
-        Serial.println("Setting desired reports");
-        if (!bno08x.enableReport(SH2_ROTATION_VECTOR))
+        Serial.println("Setting desired report to SH2_ROTATION_VECTOR");
+        // Set the report to 400Hz (2500 us interval), which is a high-speed rate for this sensor.
+        if (!bno08x.enableReport(SH2_ROTATION_VECTOR, 2500))
         {
-            Serial.println("Could not enable rotation vector");
-        }
-        if (!bno08x.enableReport(SH2_LINEAR_ACCELERATION))
-        {
-            Serial.println("Could not enable linear acceleration");
-        }
-        if (!bno08x.enableReport(SH2_GYROSCOPE_CALIBRATED))
-        {
-            Serial.println("Could not enable gyroscope");
+            Serial.println("Could not enable game rotation vector");
         }
     }
 
-    float Imu::get_roll()
+    RotationVector Imu::get_game_rotation()
     {
         if (bno08x.getSensorEvent(&sensorValue))
         {
             if (sensorValue.sensorId == SH2_ROTATION_VECTOR)
             {
-                return sensorValue.un.rotationVector.k;
-            }
-        }
-        return 0;
-    }
 
-    float Imu::get_pitch()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_ROTATION_VECTOR)
-            {
-                return sensorValue.un.rotationVector.j;
-            }
-        }
-        return 0;
-    }
+                
+            //    _last_rotation.real = sensorValue.un.rotationVector.real;
+               
+            //    _last_rotation.i = sensorValue.un.rotationVector.i;
+            //     _last_rotation.j = sensorValue.un.rotationVector.j;
+            //    _last_rotation.k = sensorValue.un.rotationVector.k;
 
-    float Imu::get_yaw()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_ROTATION_VECTOR)
-            {
-                return sensorValue.un.rotationVector.i;
+                quaternionToEuler(
+                    sensorValue.un.rotationVector.real,
+                    sensorValue.un.rotationVector.i,
+                    sensorValue.un.rotationVector.j,
+                    sensorValue.un.rotationVector.k,
+                    &_last_rotation,
+                    false);
             }
         }
-        return 0;
-    }
-
-    float Imu::get_accel_x()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_LINEAR_ACCELERATION)
-            {
-                return sensorValue.un.linearAcceleration.x;
-            }
-        }
-        return 0;
-    }
-
-    float Imu::get_accel_y()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_LINEAR_ACCELERATION)
-            {
-                return sensorValue.un.linearAcceleration.y;
-            }
-        }
-        return 0;
-    }
-
-    float Imu::get_accel_z()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_LINEAR_ACCELERATION)
-            {
-                return sensorValue.un.linearAcceleration.z;
-            }
-        }
-        return 0;
-    }
-
-    float Imu::get_gyro_x()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_GYROSCOPE_CALIBRATED)
-            {
-                return sensorValue.un.gyroscope.x;
-            }
-        }
-        return 0;
-    }
-
-    float Imu::get_gyro_y()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_GYROSCOPE_CALIBRATED)
-            {
-                return sensorValue.un.gyroscope.y;
-            }
-        }
-        return 0;
-    }
-
-    float Imu::get_gyro_z()
-    {
-        if (bno08x.getSensorEvent(&sensorValue))
-        {
-            if (sensorValue.sensorId == SH2_GYROSCOPE_CALIBRATED)
-            {
-                return sensorValue.un.gyroscope.z;
-            }
-        }
-        return 0;
+        // Return the last successfully read value
+        return _last_rotation;
     }
 
 } // namespace Imu

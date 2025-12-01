@@ -7,6 +7,13 @@
 
 namespace Imu
 {
+    // Struct holding roll (i), pitch (j), yaw (k) in radians derived from the game rotation quaternion
+    struct RotationVector {
+        float i;
+        float j;
+        float k;
+    };
+
     class Imu
     {
     public:
@@ -14,17 +21,8 @@ namespace Imu
         void init();
         void loop();
 
-        float get_roll();
-        float get_pitch();
-        float get_yaw();
-
-        float get_accel_x();
-        float get_accel_y();
-        float get_accel_z();
-
-        float get_gyro_x();
-        float get_gyro_y();
-        float get_gyro_z();
+        // Single function to get the game rotation vector
+        RotationVector get_game_rotation();
 
     private:
         Adafruit_BNO08x bno08x;

@@ -6,12 +6,13 @@
 #include <wifi.h>
 
 #include <atomic>
+#include <array>
 
 #include "axis_mqtt_tools.h"    // Include our WiFi header
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "2.0.46"   // updated dynamically from python script
+#define VERSION "2.0.132"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -21,6 +22,59 @@ int pole_pairs = 7;
 float phase_resistance = 3.5;
 float kv = 82.5;
 
+// Global atomic variables for the balance PID gains
+std::atomic<float> command_bal_p_gain = 10;
+std::atomic<float> command_bal_i_gain = 1.2;
+std::atomic<float> command_bal_d_gain = -2;
+
+// --- Custom Manual PID Controller for Balancing ---
+class ManualBalancePID {
+public:
+    // Public members to reflect the current gains
+    float P, I, D;
+    int integral_window = 16;
+
+    ManualBalancePID() {
+        // Initialize gains from global variables
+        P = command_bal_p_gain.load();
+        I = command_bal_i_gain.load();
+        D = command_bal_d_gain.load();
+        error_buffer.fill(0.0f);
+    }
+
+    float compute(float error) {
+        // Proportional term
+        float p_term = P * error;
+
+        // Integral term (sum over the window)
+        float integral_sum = 0.0f;
+        // Store current error in circular buffer before calculating sum
+        error_buffer[buffer_index] = error;
+        for (int i = 0; i < integral_window; ++i) {
+            int index = (buffer_index - i + BUFFER_SIZE) % BUFFER_SIZE;
+            integral_sum += error_buffer[index];
+        }
+        float i_term = I * integral_sum/integral_window;
+
+        // Derivative term
+        float error_change = error - previous_error;
+        float d_term = D * error_change;
+
+        // Update for next iteration
+        previous_error = error;
+        buffer_index = (buffer_index + 1) % BUFFER_SIZE;
+
+        return p_term + i_term + d_term;
+    }
+
+private:
+    static const int BUFFER_SIZE = 50;
+    std::array<float, BUFFER_SIZE> error_buffer;
+    int buffer_index = 0;
+    float previous_error = 0.0f;
+};
+// --- End of Custom PID Controller ---
+
 // Setup the motor and driver
 BLDCMotor motor = BLDCMotor(pole_pairs, phase_resistance, kv);
 BLDCDriver6PWM driver =
@@ -28,7 +82,7 @@ BLDCDriver6PWM driver =
 
 // make encoder for simplefoc
 SPIClass hspi = SPIClass(HSPI);
-MagneticSensorMT6701SSI encoder(CH0_ENC_CS);
+MagneticSensorMT6701SSI encoder(CH1_ENC_CS);
 
 // calibrated sensor object from simplefoc
 CalibratedSensor sensor = CalibratedSensor(encoder);
@@ -36,26 +90,19 @@ CalibratedSensor sensor = CalibratedSensor(encoder);
 // IMU
 Imu::Imu imu;
 
-// PID controller for balancing
-// input: pitch angle
-// output: target velocity
-PIDController balance_pid = PIDController(0.1, 0, 0, 100, 0);
+// Create an instance of our new manual PID controller
+ManualBalancePID balance_pid_manual;
 
 // global atomic variable for the motor stuff to be set by mqtt
 std::atomic<float> last_commanded_target = 0;
 std::atomic<uint> last_commanded_mode = 0;
 
-std::atomic<float> command_bal_p_gain = 0.1;
-std::atomic<float> command_bal_i_gain = 0.0;
-std::atomic<float> command_bal_d_gain = 0.0;
-
 std::atomic<float> command_vel_p_gain = 0.025;
 std::atomic<float> command_vel_i_gain = 0.3;
 std::atomic<float> command_vel_d_gain = 0.0;
 
-std::atomic<bool> enable_flag = false;
-std::atomic<bool> disable_flag = true;
-std::atomic<bool> motors_enabled = false;
+std::atomic<float> zero_point = 0.4;
+std::atomic<bool> enable_flag = true;
 
 // make a separate thread for the OTA
 TaskHandle_t loop_foc_task;
@@ -80,222 +127,199 @@ void mqtt_publish_thread(void *pvParameters)
       // Create JSON document to send data in
       StaticJsonDocument<512> doc;
 
-      // print target of foc
       doc["target"] = motor.target;
-
-      // print the encoder velocity
       doc["vel"] = motor.shaft_velocity;
 
-      // print the gains
-      doc["bal_p"] = balance_pid.P;
-      doc["bal_i"] = balance_pid.I;
-      doc["bal_d"] = balance_pid.D;
+      // Report gains from the manual PID object
+      doc["bal_p"] = balance_pid_manual.P;
+      doc["bal_i"] = balance_pid_manual.I;
+      doc["bal_d"] = balance_pid_manual.D;
 
-      doc["vel_p"] = motor.PID_velocity.P;
-      doc["vel_i"] = motor.PID_velocity.I;
-      doc["vel_d"] = motor.PID_velocity.D;
+      // doc["vel_p"] = motor.PID_velocity.P;
+      // doc["vel_i"] = motor.PID_velocity.I;
+      // doc["vel_d"] = motor.PID_velocity.D;
       
-      // doc["pitch"] = imu.get_pitch();
+      Imu::RotationVector rot = imu.get_game_rotation();
+      // doc["i"] = rot.i;  
+      doc["j"] = rot.j;
+      // doc["k"] = rot.k;
 
-      // Serialize JSON to string
+      doc["zero"] = zero_point.load();
+
+
+
+
+
       char buffer[512];
       serializeJson(doc, buffer, sizeof(buffer));
-
-      // Publish the message
-      publishMQTT(buffer);  // Use our MQTT publish function
+      publishMQTT(buffer);
     }
+
     vTaskDelay(interval_ms / portTICK_PERIOD_MS);
   }
 }
 
 void loop_foc_thread(void *pvParameters)
 {
+  bool motor_is_currently_enabled = true;
   while (1)
   {
-    // Service flags
-    if (enable_flag)
-    {
-      motor.enable();
-      enable_flag.store(false);
-      motors_enabled.store(true);
+    if (enable_flag.load()){
+      if (!motor_is_currently_enabled) {
+        motor.enable();
+        motor_is_currently_enabled = true;
+      }
+      Imu::RotationVector rot = imu.get_game_rotation();
+      float pitch = rot.j;
+      float target_velocity = balance_pid_manual.compute(zero_point.load()-pitch);
+
+      last_commanded_target.store(target_velocity);
+      motor.loopFOC();
+      motor.move(-1*target_velocity);
+
+      imu.loop();
+    } else {
+      if (motor_is_currently_enabled) {
+        motor.disable();
+        motor_is_currently_enabled = false;
+      }
     }
-    else if (disable_flag)
-    {
-      motor.disable();
-      disable_flag.store(false);
-      motors_enabled.store(false);
-    }
-
-    float pitch = imu.get_pitch();
-    float target_velocity = balance_pid(pitch);
-    motor.move(target_velocity);
-
-    motor.loopFOC();
-
-    imu.loop();
+    vTaskDelay(portTICK_PERIOD_MS);
   }
 }
 
 void setup()
 {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+  pinMode(LED_STATUS, OUTPUT);
+  digitalWrite(LED_STATUS, LOW);
+
+
   Serial.begin(115200);
-
   delay(1000);
-
   Serial.println("Starting setup...");
   Serial.print("Version: ");
   Serial.println(VERSION);
 
-  // Initialize WiFi
-  setupWiFi();  // Call our WiFi setup function
+  setupWiFi();
 
   ArduinoOTA.setHostname(NAME);
   ArduinoOTA.onStart(
       []()
       {
         String type;
-        if (ArduinoOTA.getCommand() == U_FLASH)
-        {
-          type = "sketch";
-        }
-        else
-        {  // U_SPIFFS
-          type = "filesystem";
-        }
+        if (ArduinoOTA.getCommand() == U_FLASH) type = "sketch";
+        else type = "filesystem";
         Serial.println("Start updating " + type);
-      });
-
-  ArduinoOTA.onStart(
-      []()
-      {
-        // Stop motors on OTA
-        disable_flag.store(true);
-
-        // Wait to make sure they stop
+        enable_flag.store(false); // Stop motors on OTA
         delay(100);
       });
-
   ArduinoOTA.onEnd([]() { Serial.println("\nEnd OTA Update"); });
-
   ArduinoOTA.onProgress(
       [](unsigned int progress, unsigned int total)
       { Serial.printf("Progress: %u%%\r", (progress / (total / 100))); });
-
   ArduinoOTA.onError(
       [](ota_error_t error)
       {
         Serial.printf("Error[%u]: ", error);
-        if (error == OTA_AUTH_ERROR)
-          Serial.println("Auth Failed");
-        else if (error == OTA_BEGIN_ERROR)
-          Serial.println("Begin Failed");
-        else if (error == OTA_CONNECT_ERROR)
-          Serial.println("Connect Failed");
-        else if (error == OTA_RECEIVE_ERROR)
-          Serial.println("Receive Failed");
-        else if (error == OTA_END_ERROR)
-          Serial.println("End Failed");
+        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR) Serial.println("End Failed");
       });
-
   ArduinoOTA.begin();
   
   imu.init();
 
-  // LED indicator setup
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(43, OUTPUT);
-  digitalWrite(43, LOW);
-  digitalWrite(LED_BUILTIN, LOW);
-
   hspi.begin(ENC_SCL, ENC_SDA, ENC_MOSI);
   delay(1000);
-  // initialize encoder
   encoder.init(&hspi);
 
-  // motor driver setup
+
   driver.voltage_power_supply = 12;
-  driver.voltage_limit = 12;
+  // driver.voltage_limit = 12;
   driver.init();
 
-  // link motor to driver and set up
   motor.linkDriver(&driver);
-  motor.current_limit = 5;
+  motor.current_limit = 100;
   motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
   motor.torque_controller = TorqueControlType::voltage;
+  motor.controller = MotionControlType::torque;
+;
 
-  // set pid values for velocity controller
-  motor.PID_velocity.P = 0.025;
-  motor.PID_velocity.I = 0.3;
-  motor.PID_velocity.D = 0;
-  motor.PID_velocity.output_ramp = 1000;
-  motor.PID_velocity.limit = 12;
-  motor.LPF_velocity.Tf = 0.01;
-  motor.controller = MotionControlType::velocity;
+  motor.PID_velocity.P = 0.03;
+  motor.PID_velocity.I = 0.6;
+  motor.PID_velocity.D = 0.00001;
+  motor.PID_velocity.output_ramp = 100000;
+  // motor.PID_velocity.limit = 12;
+  motor.LPF_velocity.Tf = 0.0001;
 
   motor.init();
+
   motor.linkSensor(&sensor);
+
+
+  setupMQTT();
+  Serial.println("MQTT very done");
+
+  xTaskCreatePinnedToCore(mqtt_publish_thread, "MQTT_Publish", 10000, NULL, 1,
+                          &mqtt_publish_task, 1);
+
+
 
   if (!motor.initFOC()){
     Serial.println("FOC init failed");
-  } else{
-      xTaskCreatePinnedToCore(loop_foc_thread, "loop_foc", 10000, NULL, 1,
-                          &loop_foc_task, 1);
-    
   }
-        Serial.println("FOC done");
+  else {
+    digitalWrite(LED_STATUS, HIGH);
+    delay(1000);
+
+      // MAKE IT SO IT zeroes at this point after this pause
+    Imu::RotationVector rot = imu.get_game_rotation();
+    zero_point.store(rot.j);
+    Serial.print("Zero point set to: ");
+    Serial.println(zero_point.load());
 
 
-  setupMQTT();                                 // Call our MQTT setup function
- delay(1000);
-  Serial.println("MQTT very done");
-
-  xTaskCreatePinnedToCore(mqtt_publish_thread, /* Task function. */
-                          "MQTT_Publish",      /* String with name of task. */
-                          10000,               /* Stack size in bytes. */
-                          NULL, /* Parameter passed as input of the task */
-                          1,    /* Priority of the task. */
-                          &mqtt_publish_task, /* Task handle. */
-                          1); /* Core 1 because wifi runs on core 0 */
-
-  // task for arduinoOTA
-  // Init and calibrate the IMU
-
-  Serial.println("Setup complete.");
-}
-
-void loop()
-{
-  //   if the gains have changed, disable the motor, update the values, and
-  //   re-enable the motor
-  if ((command_bal_p_gain.load() != balance_pid.P) ||
-      (command_bal_i_gain.load() != balance_pid.I) ||
-      (command_bal_d_gain.load() != balance_pid.D))
-  {
-    disable_flag.store(true);
-    delay(1);
-    while (motors_enabled.load())
-    {
-      vTaskDelay(1 / portTICK_PERIOD_MS);
-    }
-
-    balance_pid.P = command_bal_p_gain.load();
-    balance_pid.I = command_bal_i_gain.load();
-    balance_pid.D = command_bal_d_gain.load();
+    xTaskCreatePinnedToCore(loop_foc_thread, "loop_foc", 10000, NULL, 1,
+                &loop_foc_task, 1);
+    motor.enable();
 
     enable_flag.store(true);
   }
 
-  if ((command_vel_p_gain.load() != motor.PID_velocity.P) ||
-        (command_vel_i_gain.load() != motor.PID_velocity.I) ||
-        (command_vel_d_gain.load() != motor.PID_velocity.D))
-    {
-        disable_flag.store(true);
-        delay(1);
-        while (motors_enabled.load())
-        {
-            vTaskDelay(1 / portTICK_PERIOD_MS);
-        }
 
+  Serial.println("FOC done");
+
+ 
+
+  Serial.println("Setup complete.");
+}
+
+
+void loop()
+{
+  if ((command_bal_p_gain.load() != balance_pid_manual.P) ||
+      (command_bal_i_gain.load() != balance_pid_manual.I) ||
+      (command_bal_d_gain.load() != balance_pid_manual.D))
+  {
+    enable_flag.store(false);
+    delay(10);
+    balance_pid_manual.P = command_bal_p_gain.load();
+    balance_pid_manual.I = command_bal_i_gain.load();
+    balance_pid_manual.D = command_bal_d_gain.load();
+    
+    enable_flag.store(true);
+  }
+
+  if ((command_vel_p_gain.load() != motor.PID_velocity.P) ||
+      (command_vel_i_gain.load() != motor.PID_velocity.I) ||
+      (command_vel_d_gain.load() != motor.PID_velocity.D))
+    {
+        enable_flag.store(false);
+        delay(10);
         motor.PID_velocity.P = command_vel_p_gain.load();
         motor.PID_velocity.I = command_vel_i_gain.load();
         motor.PID_velocity.D = command_vel_d_gain.load();
@@ -303,8 +327,8 @@ void loop()
         enable_flag.store(true);
     }
 
-  vTaskDelay(10 / portTICK_PERIOD_MS);
 
-  //   Handle OTA updates
   ArduinoOTA.handle();
+
+  vTaskDelay(10 / portTICK_PERIOD_MS);
 }
