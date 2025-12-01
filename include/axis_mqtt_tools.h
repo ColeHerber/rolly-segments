@@ -20,6 +20,13 @@ extern const char* mqtt_ota_status_topic;
 // Declare the atomic variables as extern
 extern std::atomic<float> last_commanded_target;
 extern std::atomic<uint> last_commanded_mode;
+extern std::atomic<float> command_bal_p_gain;
+extern std::atomic<float> command_bal_i_gain;
+extern std::atomic<float> command_bal_d_gain;
+extern std::atomic<float> command_vel_p_gain;
+extern std::atomic<float> command_vel_i_gain;
+extern std::atomic<float> command_vel_d_gain;
+
 
 void setupMQTT();
 void reconnectMQTT();

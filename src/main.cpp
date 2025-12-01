@@ -11,7 +11,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "2.0.8"   // updated dynamically from python script
+#define VERSION "2.0.46"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -95,7 +95,7 @@ void mqtt_publish_thread(void *pvParameters)
       doc["vel_i"] = motor.PID_velocity.I;
       doc["vel_d"] = motor.PID_velocity.D;
       
-      doc["pitch"] = imu.get_pitch();
+      // doc["pitch"] = imu.get_pitch();
 
       // Serialize JSON to string
       char buffer[512];
@@ -139,16 +139,15 @@ void loop_foc_thread(void *pvParameters)
 void setup()
 {
   Serial.begin(115200);
-  delay(5000);
+
+  delay(1000);
+
   Serial.println("Starting setup...");
   Serial.print("Version: ");
   Serial.println(VERSION);
 
   // Initialize WiFi
   setupWiFi();  // Call our WiFi setup function
-
-  // Init and calibrate the IMU
-  imu.init();
 
   ArduinoOTA.setHostname(NAME);
   ArduinoOTA.onStart(
@@ -199,6 +198,8 @@ void setup()
       });
 
   ArduinoOTA.begin();
+  
+  imu.init();
 
   // LED indicator setup
   pinMode(LED_BUILTIN, OUTPUT);
@@ -233,9 +234,21 @@ void setup()
 
   motor.init();
   motor.linkSensor(&sensor);
-  motor.initFOC();
+
+  if (!motor.initFOC()){
+    Serial.println("FOC init failed");
+  } else{
+      xTaskCreatePinnedToCore(loop_foc_thread, "loop_foc", 10000, NULL, 1,
+                          &loop_foc_task, 1);
+    
+  }
+        Serial.println("FOC done");
+
 
   setupMQTT();                                 // Call our MQTT setup function
+ delay(1000);
+  Serial.println("MQTT very done");
+
   xTaskCreatePinnedToCore(mqtt_publish_thread, /* Task function. */
                           "MQTT_Publish",      /* String with name of task. */
                           10000,               /* Stack size in bytes. */
@@ -245,8 +258,7 @@ void setup()
                           1); /* Core 1 because wifi runs on core 0 */
 
   // task for arduinoOTA
-  xTaskCreatePinnedToCore(loop_foc_thread, "loop_foc", 10000, NULL, 1,
-                          &loop_foc_task, 1);
+  // Init and calibrate the IMU
 
   Serial.println("Setup complete.");
 }

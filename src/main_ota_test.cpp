@@ -2,14 +2,22 @@
 #include <WiFi.h>
 #include <ArduinoOTA.h>
 #include "pins_arduino.h" // Include our custom pins for AXIS board
+#include <Wire.h> // Include the Wire library for I2C
+#include "imu.h" // Include the IMU header
 #define VERSION "1.0.0"
+
+Imu::Imu imu; // Create an instance of the Imu class
 
 void setup() {
     Serial.begin(115200);
-    delay(5000);
+    Wire.begin(); // Initialize I2C bus
+    delay(1000);
     Serial.println("Starting setup...");
     Serial.print("Version: ");
     Serial.println(VERSION);
+
+    // imu.init(); // Initialize the IMU
+
     // Initialize WiFi
     WiFi.begin("rolly", "pillbugs"); 
     // Wait for connection

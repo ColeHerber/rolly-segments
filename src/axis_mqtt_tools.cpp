@@ -5,12 +5,14 @@
 // --- Define the MQTT Broker Settings ---
 const char* mqtt_server = "rollyserver.local"; //  <<--- YOUR MQTT BROKER IP
 const int mqtt_port = 1883;
-const char* mqtt_user = NAME;
+const char* mqtt_user = "crackle";
 const char* mqtt_password = "pillbugs";
-const char* mqtt_topic = "cubli";         // General data topic
-const char* mqtt_sub_topic = "cubli/cmd/#"; // Subscribe topic
-const char* mqtt_ota_topic = "cubli/ota/update";        // OTA topic
-const char* mqtt_ota_status_topic = "cubli/ota/status"; // OTA Status
+
+const char* mqtt_topic = "rolly";         // General data topic
+const char* mqtt_sub_topic = "rolly/cmd/#"; // Subscribe topic
+const char* mqtt_command_topic = "[rolly/cmd]"; // command topic
+const char* mqtt_ota_topic = "rolly/crackle/ota/update";        // OTA topic
+const char* mqtt_ota_status_topic = "rolly/crackle/ota/status";      // OTA Status
 
 WiFiClient espClient;
 PubSubClient client(espClient);  // Define the client object
@@ -52,6 +54,8 @@ void reconnectMQTT() {
             Serial.println(" Retrying in 5 seconds...");
             delay(5000);
         }
+        Serial.println("MQTT done");
+
     }
 }
 
