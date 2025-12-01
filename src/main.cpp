@@ -12,7 +12,7 @@
 #include "axis_wifi_manager.h"  // Include our MQTT header
 #include "imu.h"
 #include "pins_arduino.h"  // Include our custom pins for AXIS board
-#define VERSION "2.0.132"   // updated dynamically from python script
+#define VERSION "2.0.138"   // updated dynamically from python script
 
 #include "encoders/calibrated/CalibratedSensor.h"
 #include "encoders/mt6701/MagneticSensorMT6701SSI.h"
@@ -22,10 +22,15 @@ int pole_pairs = 7;
 float phase_resistance = 3.5;
 float kv = 82.5;
 
-// Global atomic variables for the balance PID gains
-std::atomic<float> command_bal_p_gain = 10;
-std::atomic<float> command_bal_i_gain = 1.2;
-std::atomic<float> command_bal_d_gain = -2;
+// Global atomic variables for the balance PID gains for theta
+std::atomic<float> command_bal_p_gain_theta = 16;
+std::atomic<float> command_bal_i_gain_theta = 0;
+std::atomic<float> command_bal_d_gain_theta = 0;
+
+// Global atomic variables for the balance PID gains for theta_dot
+std::atomic<float> command_bal_p_gain_theta_dot = 1.2;
+std::atomic<float> command_bal_i_gain_theta_dot = 0.0;
+std::atomic<float> command_bal_d_gain_theta_dot = 0.0;
 
 // --- Custom Manual PID Controller for Balancing ---
 class ManualBalancePID {
@@ -34,11 +39,11 @@ public:
     float P, I, D;
     int integral_window = 16;
 
-    ManualBalancePID() {
+    ManualBalancePID(const std::atomic<float>& p, const std::atomic<float>& i, const std::atomic<float>& d) {
         // Initialize gains from global variables
-        P = command_bal_p_gain.load();
-        I = command_bal_i_gain.load();
-        D = command_bal_d_gain.load();
+        P = p.load();
+        I = i.load();
+        D = d.load();
         error_buffer.fill(0.0f);
     }
 
@@ -91,7 +96,8 @@ CalibratedSensor sensor = CalibratedSensor(encoder);
 Imu::Imu imu;
 
 // Create an instance of our new manual PID controller
-ManualBalancePID balance_pid_manual;
+ManualBalancePID balance_pid_manual_theta(command_bal_p_gain_theta, command_bal_i_gain_theta, command_bal_d_gain_theta);
+ManualBalancePID balance_pid_manual_theta_dot(command_bal_p_gain_theta_dot, command_bal_i_gain_theta_dot, command_bal_d_gain_theta_dot);
 
 // global atomic variable for the motor stuff to be set by mqtt
 std::atomic<float> last_commanded_target = 0;
@@ -109,6 +115,8 @@ TaskHandle_t loop_foc_task;
 // make a separate thread for the MQTT publishing
 TaskHandle_t mqtt_publish_task;
 const int interval_ms = 500;
+std::atomic<float> pitch_dot_global = 0.0f;
+constexpr float THETA_DOT_LPF_TAU = 0.02f; // seconds, first-order LPF for theta dot
 void mqtt_publish_thread(void *pvParameters)
 {
   while (1)
@@ -131,9 +139,16 @@ void mqtt_publish_thread(void *pvParameters)
       doc["vel"] = motor.shaft_velocity;
 
       // Report gains from the manual PID object
-      doc["bal_p"] = balance_pid_manual.P;
-      doc["bal_i"] = balance_pid_manual.I;
-      doc["bal_d"] = balance_pid_manual.D;
+      doc["bal_p_theta"] = balance_pid_manual_theta.P;
+      doc["bal_i_theta"] = balance_pid_manual_theta.I;
+      doc["bal_d_theta"] = balance_pid_manual_theta.D;
+
+      doc["bal_p_theta_dot"] = balance_pid_manual_theta_dot.P;
+      doc["bal_i_theta_dot"] = balance_pid_manual_theta_dot.I;
+      doc["bal_d_theta_dot"] = balance_pid_manual_theta_dot.D;
+
+      doc["pitch_dot"] = pitch_dot_global.load();
+
 
       // doc["vel_p"] = motor.PID_velocity.P;
       // doc["vel_i"] = motor.PID_velocity.I;
@@ -162,6 +177,14 @@ void mqtt_publish_thread(void *pvParameters)
 void loop_foc_thread(void *pvParameters)
 {
   bool motor_is_currently_enabled = true;
+  float last_pitch = 0.0;
+  float pitch_dot_filtered = 0.0f;
+  unsigned long last_time = micros();
+
+  // get initial pitch to avoid a huge derivative on the first loop
+  Imu::RotationVector rot_init = imu.get_game_rotation();
+  last_pitch = rot_init.j;
+
   while (1)
   {
     if (enable_flag.load()){
@@ -171,11 +194,33 @@ void loop_foc_thread(void *pvParameters)
       }
       Imu::RotationVector rot = imu.get_game_rotation();
       float pitch = rot.j;
-      float target_velocity = balance_pid_manual.compute(zero_point.load()-pitch);
+
+      unsigned long now = micros();
+      float dt = (now - last_time) * 1e-6f;
+      last_time = now;
+      
+      float pitch_dot = 0;
+      if (dt > 0) {
+        pitch_dot = (pitch - last_pitch) / dt;
+      }
+      last_pitch = pitch;
+      float alpha = (dt > 0) ? dt / (THETA_DOT_LPF_TAU + dt) : 0.0f;
+      pitch_dot_filtered += alpha * (pitch_dot - pitch_dot_filtered);
+      pitch_dot_global.store(pitch_dot_filtered);
+
+
+      float error_theta = zero_point.load() - pitch;
+      float output_theta = balance_pid_manual_theta.compute(error_theta);
+
+      float error_theta_dot = 0 - pitch_dot_filtered;
+      float output_theta_dot = balance_pid_manual_theta_dot.compute(error_theta_dot);
+
+      float target_velocity = output_theta + output_theta_dot;
+
 
       last_commanded_target.store(target_velocity);
       motor.loopFOC();
-      motor.move(-1*target_velocity);
+      motor.move(target_velocity);
 
       imu.loop();
     } else {
@@ -301,15 +346,28 @@ void setup()
 
 void loop()
 {
-  if ((command_bal_p_gain.load() != balance_pid_manual.P) ||
-      (command_bal_i_gain.load() != balance_pid_manual.I) ||
-      (command_bal_d_gain.load() != balance_pid_manual.D))
+  if ((command_bal_p_gain_theta.load() != balance_pid_manual_theta.P) ||
+      (command_bal_i_gain_theta.load() != balance_pid_manual_theta.I) ||
+      (command_bal_d_gain_theta.load() != balance_pid_manual_theta.D))
   {
     enable_flag.store(false);
     delay(10);
-    balance_pid_manual.P = command_bal_p_gain.load();
-    balance_pid_manual.I = command_bal_i_gain.load();
-    balance_pid_manual.D = command_bal_d_gain.load();
+    balance_pid_manual_theta.P = command_bal_p_gain_theta.load();
+    balance_pid_manual_theta.I = command_bal_i_gain_theta.load();
+    balance_pid_manual_theta.D = command_bal_d_gain_theta.load();
+    
+    enable_flag.store(true);
+  }
+
+  if ((command_bal_p_gain_theta_dot.load() != balance_pid_manual_theta_dot.P) ||
+      (command_bal_i_gain_theta_dot.load() != balance_pid_manual_theta_dot.I) ||
+      (command_bal_d_gain_theta_dot.load() != balance_pid_manual_theta_dot.D))
+  {
+    enable_flag.store(false);
+    delay(10);
+    balance_pid_manual_theta_dot.P = command_bal_p_gain_theta_dot.load();
+    balance_pid_manual_theta_dot.I = command_bal_i_gain_theta_dot.load();
+    balance_pid_manual_theta_dot.D = command_bal_d_gain_theta_dot.load();
     
     enable_flag.store(true);
   }

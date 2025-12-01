@@ -21,9 +21,12 @@ PubSubClient client(espClient);  // Define the client object
 extern std::atomic<bool> enable_flag;
 extern std::atomic<float> last_commanded_target;
 extern std::atomic<uint> last_commanded_mode;
-extern std::atomic<float> command_bal_p_gain;
-extern std::atomic<float> command_bal_i_gain;
-extern std::atomic<float> command_bal_d_gain;
+extern std::atomic<float> command_bal_p_gain_theta;
+extern std::atomic<float> command_bal_i_gain_theta;
+extern std::atomic<float> command_bal_d_gain_theta;
+extern std::atomic<float> command_bal_p_gain_theta_dot;
+extern std::atomic<float> command_bal_i_gain_theta_dot;
+extern std::atomic<float> command_bal_d_gain_theta_dot;
 extern std::atomic<float> command_vel_p_gain;
 extern std::atomic<float> command_vel_i_gain;
 extern std::atomic<float> command_vel_d_gain;
@@ -102,14 +105,23 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
         if (doc.containsKey("mode")) {
             last_commanded_mode.store(doc["mode"].as<uint>());
         }
-        if (doc.containsKey("bal_p")) {
-            command_bal_p_gain.store(doc["bal_p"].as<float>());
+        if (doc.containsKey("bal_p_theta")) {
+            command_bal_p_gain_theta.store(doc["bal_p_theta"].as<float>());
         }
-        if (doc.containsKey("bal_i")) {
-            command_bal_i_gain.store(doc["bal_i"].as<float>());
+        if (doc.containsKey("bal_i_theta")) {
+            command_bal_i_gain_theta.store(doc["bal_i_theta"].as<float>());
         }
-        if (doc.containsKey("bal_d")) {
-            command_bal_d_gain.store(doc["bal_d"].as<float>());
+        if (doc.containsKey("bal_d_theta")) {
+            command_bal_d_gain_theta.store(doc["bal_d_theta"].as<float>());
+        }
+        if (doc.containsKey("bal_p_theta_dot")) {
+            command_bal_p_gain_theta_dot.store(doc["bal_p_theta_dot"].as<float>());
+        }
+        if (doc.containsKey("bal_i_theta_dot")) {
+            command_bal_i_gain_theta_dot.store(doc["bal_i_theta_dot"].as<float>());
+        }
+        if (doc.containsKey("bal_d_theta_dot")) {
+            command_bal_d_gain_theta_dot.store(doc["bal_d_theta_dot"].as<float>());
         }
         if (doc.containsKey("vel_p")) {
             command_vel_p_gain.store(doc["vel_p"].as<float>());

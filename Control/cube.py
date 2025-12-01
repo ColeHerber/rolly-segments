@@ -76,10 +76,12 @@ class RollyControlPygame:
         # --- UI Elements ---
         self.input_boxes = []
         defaults = {
-            "bal_p": "0.1", "bal_i": "0.2", "bal_d": "0.5",
+            "bal_p_theta": "10", "bal_i_theta": "1.2", "bal_d_theta": "-2",
+            "bal_p_theta_dot": "0", "bal_i_theta_dot": "0", "bal_d_theta_dot": "0",
         }
         pids = {
-            "bal_p": "Balance P", "bal_i": "Balance I", "bal_d": "Balance D"
+            "bal_p_theta": "Theta P", "bal_i_theta": "Theta I", "bal_d_theta": "Theta D",
+            "bal_p_theta_dot": "Theta Dot P", "bal_i_theta_dot": "Theta Dot I", "bal_d_theta_dot": "Theta Dot D",
         }
         y_offset = 20
         for key, label in pids.items():
