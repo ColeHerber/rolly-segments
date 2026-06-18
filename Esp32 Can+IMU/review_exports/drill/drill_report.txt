@@ -1,0 +1,31 @@
+Drill report for Esp32 Can+IMU.kicad_pcb
+Created on 2026-06-02T14:34:24
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file 'Esp32 Can+IMU.drl' contains
+    plated through holes:
+    =============================================================
+    T1  0.200mm  0.0079"  (12 holes))
+    T2  0.300mm  0.0118"  (133 holes))
+    T3  0.500mm  0.0197"  (11 holes))
+    T4  0.600mm  0.0236"  (1 hole)
+    T5  0.700mm  0.0276"  (4 holes))
+    T6  1.000mm  0.0394"  (18 holes))
+    T7  1.800mm  0.0709"  (6 holes))
+    T8  3.200mm  0.1260"  (4 holes))
+
+    Total plated holes count 189
+
+
+Not plated through holes are merged with plated holes
+    unplated through holes:
+    =============================================================
+    T9  0.580mm  0.0228"  (1 hole)  (with 1 slot)
+    T10  0.660mm  0.0260"  (1 hole)
+
+    Total unplated holes count 2

@@ -1,0 +1,121 @@
+# ninja log v6
+4	14	1781732522224338437	pico-sdk/src/rp2350/boot_stage2/CMakeFiles/picotoolForceReconfigure	42605c4f6b2bfa3
+4	14	1781732522224338437	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/CMakeFiles/picotoolForceReconfigure	42605c4f6b2bfa3
+14	31	1781732522251398639	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-mkdir	b45aba72b5bde92
+14	31	1781732522251398639	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-mkdir	b45aba72b5bde92
+32	48	1781732522267789582	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-download	82478c259617e617
+32	48	1781732522267789582	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-download	82478c259617e617
+48	63	1781732522283510125	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-update	7cb8e47dae0738af
+48	63	1781732522283510125	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-update	7cb8e47dae0738af
+64	81	1781732522301215830	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-patch	a2afb68c13cb6e9b
+64	81	1781732522301215830	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-patch	a2afb68c13cb6e9b
+81	692	1781732522911562389	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-configure	64e5eaf9145dfd79
+81	692	1781732522911562389	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-configure	64e5eaf9145dfd79
+692	8408	1781732522912428034	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-build	3f6178052008d580
+692	8408	1781732522912428034	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-build	3f6178052008d580
+8409	8495	1781732530629039089	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-install	c5c176eea0ed2f1
+8409	8495	1781732530629039089	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-install	c5c176eea0ed2f1
+8495	8756	1781732530975464896	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-test	d80be5af77002d64
+8495	8756	1781732530975464896	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-test	d80be5af77002d64
+8756	8787	1781732531006829130	pico-sdk/src/rp2350/boot_stage2/CMakeFiles/picotoolBuild-complete	fa60f9b8facc41d0
+8756	8787	1781732531006829130	pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-done	fa60f9b8facc41d0
+8756	8787	1781732531006829130	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/CMakeFiles/picotoolBuild-complete	fa60f9b8facc41d0
+8756	8787	1781732531006829130	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-done	fa60f9b8facc41d0
+8787	8816	1781732531007759696	pico-sdk/src/rp2350/boot_stage2/CMakeFiles/bs2_default.dir/compile_time_choice.S.o	83e3f771617d4128
+8816	8840	1781732531059644498	pico-sdk/src/rp2350/boot_stage2/bs2_default.elf	a72fa8b5b017174d
+8816	8840	1781732531059644498	pico-sdk/src/rp2350/boot_stage2/bs2_default.dis	a72fa8b5b017174d
+8816	8840	1781732531059644498	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/bs2_default.dis	a72fa8b5b017174d
+8840	8849	1781732531068785365	pico-sdk/src/rp2350/boot_stage2/bs2_default.bin	f5871c3b36d9129a
+8840	8849	1781732531068785365	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/bs2_default.bin	f5871c3b36d9129a
+8849	8896	1781732531113152435	pico-sdk/src/rp2350/boot_stage2/bs2_default_padded_checksummed.S	6af708d5fa845f9e
+8849	8896	1781732531113152435	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/bs2_default_padded_checksummed.S	6af708d5fa845f9e
+8900	8971	1781732531120767831	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_irq/irq_handler_chain.S.o	c28685b602fbf0e7
+8898	9013	1781732531118513416	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_platform_common/common.c.o	e3c9de586d986a62
+8898	9036	1781732531118211755	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2350/pico_platform/platform.c.o	e2cf5dd2ce9f9c05
+8899	9045	1781732531119238944	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_sync/sync.c.o	ad41a793b0c36f07
+8899	9047	1781732531120011679	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_sync_spin_lock/sync_spin_lock.c.o	e67a124869363bcc
+8898	9050	1781732531118890075	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/hardware_claim/claim.c.o	d27e03e8de0c89e4
+9013	9094	1781732531233451348	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_sync/lock_core.c.o	b27cfd2a124dcf75
+8898	9098	1781732531118700246	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_platform_panic/panic.c.o	e15a8e840f0b3672
+8897	9105	1781732531117535893	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_stdlib/stdlib.c.o	1bab3bae1adff29a
+8971	9108	1781732531191633104	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_sync/sem.c.o	4dcd6d223a7104fb
+8897	9120	1781732531117276898	CMakeFiles/pico_uart_bridge.dir/usb_descriptors.c.o	3e129f6bf1c82412
+9045	9147	1781732531265575735	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_sync/critical_section.c.o	49725332c89ac7e2
+9050	9158	1781732531270533390	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_time/timeout_helper.c.o	a054dcc0e76a87f2
+9036	9166	1781732531256053333	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_sync/mutex.c.o	9049d3fa8e454e03
+8896	9168	1781732531116877405	CMakeFiles/pico_uart_bridge.dir/main.c.o	f4983e1672802d75
+8897	9195	1781732531117812721	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_gpio/gpio.c.o	c2f3d0eb62769da4
+8900	9195	1781732531120558835	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_irq/irq.c.o	f1f6beb98574cbc0
+9158	9254	1781732531378259507	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_pll/pll.c.o	ca454f0ef2e42113
+9166	9262	1781732531386767558	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_vreg/vreg.c.o	12da4c55d535712d
+9098	9271	1781732531318460239	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_util/datetime.c.o	634e8ff081f98765
+9120	9276	1781732531340673703	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_uart/uart.c.o	76f6d40f2ffbfdc5
+9195	9277	1781732531415549609	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_ticks/ticks.c.o	8e5cd54d3b166786
+9108	9300	1781732531328206558	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_util/queue.c.o	a1224aeaab1a9153
+9168	9343	1781732531387987411	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_watchdog/watchdog.c.o	306daafadd7bd106
+9277	9353	1781732531497462760	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_divider/divider.c.o	ecbd77f085cb0d42
+9255	9353	1781732531474993010	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_bootrom/bootrom_lock.c.o	f78f8a800840317f
+9196	9357	1781732531415973560	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_bootrom/bootrom.c.o	87622990f80edcf0
+9262	9364	1781732531482167877	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_boot_lock/boot_lock.c.o	f2942c79fe7e7009
+9271	9368	1781732531491488746	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_flash/flash.c.o	3b7f79f5ea07a392
+9276	9370	1781732531496282157	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_xosc/xosc.c.o	75499f89c8f9d60d
+9301	9378	1781732531521011033	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime/runtime.c.o	127ac5d6ce20940d
+9094	9386	1781732531314133319	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_timer/timer.c.o	a0000ef81159e3da
+9105	9401	1781732531325784228	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_util/pheap.c.o	825e5d58e0cec79d
+9357	9403	1781732531577033997	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_bit_ops/bit_ops_aeabi.S.o	1271d9c7e2390297
+9370	9423	1781732531590387208	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_aeabi_dcp.S.o	e08c6d928a4d6fbd
+9386	9423	1781732531606501160	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_sci_m33.S.o	eac690f2e4f50ea2
+9378	9425	1781732531598664430	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_fma_dcp.S.o	d9f16d7eb76f3eb9
+9353	9440	1781732531573529895	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime_init/runtime_init_stack_guard.c.o	9beef7d6e52cc9d3
+9401	9447	1781732531621553590	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_conv_m33.S.o	113b1ade1c6573a
+9147	9448	1781732531367783326	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_clocks/clocks.c.o	6c76d46a8c9fbafa
+9353	9464	1781732531573168568	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime_init/runtime_init_clocks.c.o	809abedaf3439039
+9423	9466	1781732531643309270	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_conv32_vfp.S.o	3e0285b79ebc6771
+9425	9470	1781732531645860682	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_sci_m33_vfp.S.o	26d527d0b78dc129
+9423	9474	1781732531643897010	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_common_m33.S.o	c9310bacca9dc588
+9364	9493	1781732531584186239	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_divider/divider_compiler.c.o	ce60f19bd3722a45
+9047	9501	1781732531267597405	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/common/pico_time/time.c.o	2d9704bf4ffcefad
+9470	9558	1781732531690848016	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_crt0/crt0.S.o	1719788c36dec01f
+9464	9572	1781732531684607590	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_standard_binary_info/standard_binary_info.c.o	2b2c0edd1829f94b
+9343	9579	1781732531563859490	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_runtime_init/runtime_init.c.o	e73b038c9daf959a
+9440	9584	1781732531660722240	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_malloc/malloc.c.o	7f4263492b1013ae
+9447	9614	1781732531667360909	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_atomic/atomic.c.o	2163b7b8689f6d30
+9501	9699	1781732531721319952	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_unique_id/unique_id.c.o	1cd2cffa80247ad1
+9572	9707	1781732531792128017	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_xip_cache/xip_cache.c.o	fe1fa7a359c6a450
+9403	9717	1781732531623533053	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_float/float_math.c.o	dadeff714878943c
+9708	9749	1781732531927975254	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/audio/audio_device.c.o	6243ba250dbbb3fd
+9474	9762	1781732531694313535	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_clib_interface/newlib_interface.c.o	34cd3a1b1dd12cc0
+9448	9784	1781732531667987647	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_cxx_options/new_delete.cpp.o	670d12483c42bb43
+9749	9794	1781732531969233782	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/dfu/dfu_device.c.o	9f4493b8621ff4e7
+9493	9795	1781732531713773884	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_stdio/stdio.c.o	cfda29dfdca1b18a
+9763	9803	1781732531982960820	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/dfu/dfu_rt_device.c.o	2dba8df4c393dd07
+9368	9811	1781732531588731530	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_double/double_math.c.o	53186560125db78
+9784	9815	1781732532004340133	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/hid/hid_device.c.o	74860142d465830e
+9795	9831	1781732532015588591	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/msc/msc_device.c.o	f1256737378e727f
+9794	9835	1781732532014293782	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/midi/midi_device.c.o	191079c43dd54731
+9584	9839	1781732531804831824	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/portable/raspberrypi/rp2040/rp2040_usb.c.o	4812cc36cb32ed81
+9803	9844	1781732532023136993	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/net/ecm_rndis_device.c.o	8d689046a61c5aa7
+9812	9849	1781732532031948497	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/net/ncm_device.c.o	5fa5fae6f8627af8
+9815	9852	1781732532035503098	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/usbtmc/usbtmc_device.c.o	f3021de6bc2f5c79
+9831	9860	1781732532051322097	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/vendor/vendor_device.c.o	6cbb75ea01faecdc
+9835	9877	1781732532055882679	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/video/video_device.c.o	ec0fae3d0fc12817
+9699	9884	1781732531919220791	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/device/usbd_control.c.o	386950d730c4ee0f
+9860	9887	1781732532080655429	pico-sdk/src/rp2350/boot_stage2/CMakeFiles/bs2_default_library.dir/bs2_default_padded_checksummed.S.o	a5e798a41bcd241f
+9558	9890	1781732531778614434	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/hardware_flash/flash.c.o	c281290c1eb9732c
+9718	9917	1781732531937964319	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/class/cdc/cdc_device.c.o	3f77f6778c03c4da
+9849	9923	1781732532069329680	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_fix/rp2040_usb_device_enumeration/rp2040_usb_device_enumeration.c.o	4352a956c108bdce
+9466	9960	1781732531686316391	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/src/rp2_common/pico_printf/printf.c.o	acf8b69b4d607aa2
+9579	9964	1781732531799549380	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/portable/raspberrypi/rp2040/dcd_rp2040.c.o	2fc9b490bd34822
+9853	9996	1781732532072958697	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/hw/bsp/rp2040/family.c.o	2ae2ebc91fb827ca
+9614	10012	1781732531834524191	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/device/usbd.c.o	2d6913e334a60bda
+9839	10015	1781732532059217742	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/tusb.c.o	63f5e3e9acb3edb7
+9844	10037	1781732532064803514	CMakeFiles/pico_uart_bridge.dir/Users/cole/.pico-sdk/sdk/2.2.0/lib/tinyusb/src/common/tusb_fifo.c.o	fac9380e5765787e
+10037	10116	1781732532335958604	pico_uart_bridge.elf	ece516922afe6f7f
+10037	10116	1781732532335958604	pico_uart_bridge.dis	ece516922afe6f7f
+10037	10116	1781732532335958604	pico_uart_bridge.hex	ece516922afe6f7f
+10037	10116	1781732532335958604	pico_uart_bridge.bin	ece516922afe6f7f
+10037	10116	1781732532335958604	pico_uart_bridge.uf2	ece516922afe6f7f
+10037	10116	1781732532335958604	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico_uart_bridge.dis	ece516922afe6f7f
+10037	10116	1781732532335958604	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico_uart_bridge.hex	ece516922afe6f7f
+10037	10116	1781732532335958604	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico_uart_bridge.bin	ece516922afe6f7f
+10037	10116	1781732532335958604	/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico_uart_bridge.uf2	ece516922afe6f7f

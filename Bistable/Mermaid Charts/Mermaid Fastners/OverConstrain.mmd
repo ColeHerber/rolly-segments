@@ -1,0 +1,26 @@
+flowchart TD
+
+   
+    O0{"Overconstraint check"}
+
+    O0 --> O1["List the six relative degrees of freedom"]
+
+    O1 --> O2["Assign exactly one intended feature to constrain each required degree of freedom"]
+
+    O2 --> O3{"Do multiple rigid features constrain the same motion?"}
+
+    O3 -->|"No"| O4["Apply tolerances and verify preload, strength, fatigue, corrosion, and assembly"]
+
+    O3 -->|"Yes"| O5{"Can all locating features be machined in one setup?"}
+
+    O5 -->|"Reliably yes"| O6["Verify Tolerences + Deformation"]
+
+    O5 -->|"No or uncertain"| O7["Relieve one constraint"]
+
+    O7 --> O8["Replace second round pin with diamond pin or slot"]
+
+    O7 --> O9["Increase bolt-hole clearance; do not use bolts as competing locators"]
+
+    O7 --> O10["`Use a spherical **wave** washer, or other complient interfce`"]
+
+    O7 --> O11["Use one radial constraining feature and one feature for angular clocking"]

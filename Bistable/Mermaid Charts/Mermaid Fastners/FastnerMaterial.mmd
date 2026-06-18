@@ -1,0 +1,62 @@
+flowchart TD
+    A["Threaded fastening required"] --> P0{"Parent material?"}
+
+    P0 -->|"Plastic"| P1
+    P0 -->|"Aluminum"| A1
+    P0 -->|"Other metal"| M1["Consult literature, follow aluminum for rough guidlines"] -->A1
+
+    %% Plastic
+    P1{"Plastic manufacturing method?"}
+    P1 -->|"FDM or other 3D print"| F0
+    P1 -->|"Machined plastic"| MP0
+    P1 -->|"Injection molded or cast plastic"| MC0
+
+    %% 3D printed plastic
+    F0{"Expected number of assembly cycles?"}
+    F0 -->|"One or very few"| F1{"Load level?"}
+    F0 -->|"Repeated service"| F4
+
+    F1 -->|"Low"| F2["Plastic thread-forming screw"]
+    F1 -->|"Very light; nonstructural"| F3["Expandable plastic anchor"]
+    F1 -->|"Light; Semi-Structural"| F10["Captive Nut"]
+
+    F1 -->|"Moderate or high"| F4["Use a metallic insert or through-bolt"]
+
+    F4{"Can insert installation be controlled?"}
+    F4 -->|"Yes; thermoplastic material"| F5["`Heat-set or ultrasonic insert Use proper boss and insertion fixture **Very difficult & unlikely**`"]
+    F4 -->|"No"| F6{"Back side accessible?"}
+
+    F6 -->|"Yes"| F7["Through-bolt with nut and washer"]
+    F6 -->|"No"| F8["Screw to expand insert"]
+
+    %% Machined plastic
+    MP0{"Repeated removal or significant load?"}
+    MP0 -->|"Yes"| MP1["Threaded insert or through-bolt"]
+    MP0 -->|"No"| MP2{"Plastic supports direct threading?"}
+
+    MP2 -->|"Yes"| MP3["Coarse standard tap or plastic-specific thread form"]
+    MP2 -->|"No or uncertain"| MP1
+
+    MP3 --> MP4{"Vibration or temperature cycling?"}
+    MP4 -->|"Low"| MP5["Direct thread with controlled torque"]
+    MP4 -->|"Moderate or high"| MP6["Additional Support or insert required"]
+
+    %% Molded or cast plastic
+    MC0{"Production volume and tooling access?"}
+    MC0 -->|"High volume; insert can be placed in mold"| MC1["Molded-in insert"]
+    MC0 -->|"Post-process installation required"| MC2{"Thermoplastic?"}
+
+    MC2 -->|"Yes"| MC3["`Ultrasonic, thermal, press-in, or self-tapping insert **discuss with manufacturer**`"]
+    MC2 -->|"No or heat-sensitive"| MC4["Honded, mechanically retained, or through-bolted insert"]
+
+
+    %% Aluminum
+    A1{"Through-bolt with nut possible?"}
+    A1 -->|"Yes"| A2["Prefer through-bolt when practical(rarely)"]
+    A1 -->|"No; tapped aluminum required"| A3["Use adequate thread engagement or a metallic thread insert"]
+
+    A3 --> A4{"Repeated service, high load, or damaged-thread consequence?"}
+
+    A4 -->|"Yes"| A5["Use wire-thread or solid insert"]
+    A4 -->|"No"| A6["Directly tapped aluminum may be acceptable"]
+    

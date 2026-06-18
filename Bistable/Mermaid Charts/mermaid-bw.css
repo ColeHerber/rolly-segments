@@ -1,0 +1,61 @@
+svg {
+  background: #ffffff !important;
+}
+
+.node rect,
+.node circle,
+.node ellipse,
+.node polygon,
+.node path {
+  fill: #ffffff !important;
+  stroke: #111111 !important;
+  stroke-width: 2px !important;
+}
+
+.cluster rect {
+  fill: #ffffff !important;
+  stroke: #666666 !important;
+  stroke-width: 2px !important;
+}
+
+.edgePath .path,
+.flowchart-link {
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+}
+
+.arrowheadPath,
+marker path {
+  fill: #000000 !important;
+  stroke: #000000 !important;
+}
+
+.nodeLabel,
+.edgeLabel,
+.label,
+.cluster-label,
+text,
+tspan {
+  color: #000000 !important;
+  fill: #000000 !important;
+}
+
+.edgeLabel,
+.edgeLabel rect,
+.labelBkg {
+  background: #d9d9d9 !important;
+  fill: #d9d9d9 !important;
+  opacity: 1 !important;
+}
+
+.edgeLabel .background {
+  fill: #d9d9d9 !important;
+  stroke: #666666 !important;
+  stroke-width: 1px !important;
+  opacity: 1 !important;
+}
+
+.cluster-label .background {
+  fill: #ffffff !important;
+  stroke: none !important;
+}

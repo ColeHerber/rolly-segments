@@ -1,0 +1,47 @@
+flowchart TD
+    A["Shaft connection or component alignment required"] --> B{"Primary purpose?"}
+
+    B -->|"Transmit torque"| T0
+    B -->|"Retain component axially"| R0
+    B -->|"Precisely align removable parts"| L0
+    B -->|"Align and transmit load"| C0
+
+    %% Torque transmission
+    T0{"Torque magnitude and reversals?"}
+    T0 -->|"Low torque; occasional adjustment"| T1{"Shaft may be locally damaged?"}
+    T1 -->|"Acceptable"| T2["Cup-point set screw hub"]
+    T1 -->|"No"| T3["Split-clamp or clamping hub"]
+
+    T0 -->|"Moderate torque"| T4{"Frequent removal or angular indexing?"}
+    T4 -->|"No"| T5["Parallel Key with axial retention"]
+    T4 -->|"Yes"| T6["Spline, keyed clamping hub,or removable taper-lock hub"]
+
+    T0 -->|"High torque, reversing, or fatigue-critical"| T7["Spline, interference fit,taper-lock, or engineered flange"]
+
+    %% Axial retention
+    R0{"Must position be adjustable?"}
+    R0 -->|"Yes"| R1["Shaft collar"]
+    R0 -->|"No"| R2{"Can shaft geometry be modified?"}
+    R2 -->|"Yes"| R3["Shoulder+bolt, retaining ring, cross-pin, threaded shaft"]
+    R2 -->|"No"| R4["Shaft Collar"]
+
+    R3 --> R5{"Failure would be hazardous?"}
+    R5 -->|"Yes"| R6["Use positive secondary retention"]
+    R5 -->|"No"| R7["Verify axial load, shock load,groove stress, and serviceability"]
+
+    %% Alignment
+    L0{"Required repeatability?"}
+    L0 -->|"Loose or visual alignment"| L1["Clearance bolts plus locating edges"]
+    L0 -->|"Moderate"| L2["Pilot diameter, shoulder,or one locating dowel"]
+    L0 -->|"High"| L3{"Parts separate and reassemble?"}
+
+    L3 -->|"No"| L4["Two fitted dowels only when locating holes reamed in manufacturing together"]
+    L3 -->|"Yes"| L5["One round pin plus one relieved feature"]
+
+    L5 --> L6{"How should thermal and tolerance motion be released?"}
+    L6 -->|"Primarily along one direction"| L7["Round pin plus slot"]
+    L6 -->|"Need two-axis seating without binding"| L8["Round pin plus locating/diamond pin"]
+    L6 -->|"Extreme precision or changing temperature"| L9["Kinematic coupling or flexure-based mount"]
+
+    %% Combined
+    C0["Follow the chart 2x"] 

@@ -1,0 +1,35 @@
+flowchart TB
+
+    Q0{"Primary role?"}
+
+    Q0 -->|"Structural"| ST0{"Strength critical?"}
+    Q0 -->|"Flexible"| FL0{"High cushion?"}
+    Q0 -->|"Non-structural"| NS0{"Insulation?"}
+
+    ST0 -->|"Yes"| ST1{"Stiff/Rigid Requriment?"}
+    ST0 -->|"Moderate"| ST3{"Heat conduction?"}
+    ST0 -->|"No"| ST2{"Complex print?"}
+
+    ST1 -->|"Yes"| AL1["Aluminum"]
+    ST1 -->|"No"| TPU1["TPU"]
+
+    ST2 -->|"Yes"| PC3D1["3D-PC"]
+    ST2 -->|"No"| AL2["Aluminum"]
+
+    ST3 -->|"Yes"| AL3["Aluminum"]
+    ST3 -->|"No"| PC3D2["3D-PC"]
+
+    FL0 -->|"Yes"| FTPU1["Foaming TPU"]
+    FL0 -->|"No"| FL1{"High elasticity?"}
+
+    FL1 -->|"Yes"| TPU2["TPU"]
+    FL1 -->|"No"| FTPU2["Foaming TPU"]
+
+    NS0 -->|"Yes"| NS1{"Flat?"}
+    NS0 -->|"No"| NS2{"Printed part?"}
+
+    NS1 -->|"Yes"| LEX1["Lexan"]
+    NS1 -->|"No"| PC3D3["PETG"]
+
+    NS2 -->|"Yes"| PETG1["PETG"]
+    NS2 -->|"No"| LEX2["Lexan"]

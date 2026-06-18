@@ -1,0 +1,683 @@
+================================================================================
+  ESP32-S3 CAN + IMU BOARD — FULL CIRCUIT DIAGRAM  (Rev B)
+  MCU:   ESP32-S3-WROOM-1-N8
+  IMU:   ISM6HG256X (SPI)
+  CAN:   SN65HVD230 + 2× JST GH 4-circuit (DroneCAN dual-port daisy-chain)
+  POWER: TPS54360B-Q1 (HV buck, 60V→5V) + AP2112K-3.3 (LDO, 5V→3.3V)
+  I/O:   3× Analog In, 3× PWM Out (0.1" headers), 1× Qwiic I2C
+================================================================================
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 1. POWER ARCHITECTURE
+════════════════════════════════════════════════════════════════════════════════
+
+                                       [F1: MF-MSMF200-2]    anode  cathode
+XT30(+) ──┬────────────────────────────────[fuse]────────────[D7: SS56]─────────► VIN
+           │                                                  (series reverse polarity protection)
+       [D_TVS1: SMBJ58A]
+        clamps to ~58V
+           │
+          GND
+                                                                                │
+                                                              ┌─────────────────┘
+                                                              │
+                    TPS54360B-Q1 (U4)  [HSOP-8 + PowerPAD]
+                    EPAD (pin 9, bottom) ─── GND  (solder to thermal vias)
+                    Values match TI datasheet Figure 33 reference design (5V / 3.5A)
+
+VIN ─────┬──────────────────────────────────────────────────────────────────────────────────────
+         │                  ┌─────────────────────────────────────────────────────────────────┐
+     [C1: 2.2µF 100V]─ GND │                                                                 │
+     [C2: 2.2µF 100V]─ GND │                                    ┌──[C4: 100nF]───────────┐   │
+         │                  │                                    │                        │   │
+         └─────────────────►│VIN (pin 2)            BOOT (pin 1)│         SW (pin 8) ◄───┘   │
+                            │                                    │              │              │
+    VIN──[R1: 523kΩ]──────┐ │EN  (pin 3)             GND (pin 7)│─── GND       │              │
+              [R2: 84.5kΩ]►│  UVLO: starts ~8.5V in             │        ┌─────┘              │
+                         │  │                                    │        ▼                    │
+                        GND │RT/CLK (pin 4)                     │  [D8: SS56]──── GND         │
+  [R3: 162kΩ]──────────────►│  (sets fsw ≈ 600 kHz)             │        │                    │
+         GND                │                                    │   [L1: 8.2µH 5A]   TP_SW   │
+                            │COMP (pin 6)            FB (pin 5)◄─│────────┴────► VOUT ── TP_VBUCK│
+  [R4:  13kΩ] ─────────────►│  │                                 │                │            │
+  [C5: 6800pF]──── GND     │  └──[C8: 39pF]──GND               │           [C6: 47µF 10V]─GND│
+                            └────────────────────────────────────┘           [C7: 47µF 10V]─GND│
+                                                                                  │             │
+                                                                            [R5: 59kΩ]         │
+                                                                                  │             │
+                                                                             ──►FB (pin 5)      │
+                                                                                  │             │
+                                                                            [R6: 10.2kΩ]       │
+                                                                                  │             │
+                                                                                 GND            │
+                                                                                               │
+                                                              Vout = 0.8×(1+59k/10.2k) ≈ 5.43V │
+                                                                                               │
+                                                                 └─────────────────────────────┘
+                                                                     │
+                                                              [D5: SS54 Schottky]
+                                                                     │
+  USB-C VBUS ─────────────────────────────────── [D2: SS54] ──►──── ┤
+                                                                     │  5V_BUS ── TP_5VBUS
+  CAN JST Pin 1 (+5V in) ─────────────────────── [D6: SS54] ──►──── ┤
+                                                                     │
+                                                              ┌──────┘
+                                                         AP2112K-3.3  (U5, fixed 3.3V LDO)  [SOT25]
+                                                         ┌──────────────────────┐
+                                                         │  VIN  (pin 1): 5V_BUS│  ← ⚠ MISSING: add C_VIN 1µF ceramic
+                                                         │  GND  (pin 2): GND   │
+                                                         │  EN   (pin 3): VIN   │  ← MUST tie to VIN.
+                                                         │  NC   (pin 4): NC    │    Internal 3MΩ pull-down
+                                                         │  VOUT (pin 5)        │──► 3.3V rail ── TP_3V3
+                                                         │                      │    ⚠ MISSING: add C_VOUT 4.7µF ceramic
+                                                         └──────────────────────┘
+                                                         Linear reg — no inductor needed.
+                                                         Dropout: 250mV typ at 600mA (3.3V ver).
+                                                         At 350mA avg: P≈0.6W. θJA=184°C/W (SOT25).
+                                                         ΔT≈110°C at full continuous load — OK for
+                                                         burst WiFi duty cycles only. For sustained
+                                                         heavy WiFi: use SOT89-5 (θJA=120°C/W).
+
+  XT30(–) ─────────────── GND ── TP_GND
+  USB-C GND ───────────── GND
+  CAN JST Pin 4 ────────── GND
+
+  NOTE: 5V_BUS ≈ 4.9V when XT30 active (TPS54360B-Q1 Vout ≈5.43V minus ~0.55V Schottky Vf on D5).
+        5V_BUS ≈ 4.45V when powered from USB-C or CAN bus alone.
+        AP2112K operates from 2.5–6V — stable in all supply scenarios.
+        XT30 rated 15A continuous / 30A instantaneous (1-min). Use ≥16AWG wire.
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 2. USB-C CONNECTOR  (J2 — HRO TYPE-C-31-M-12)
+════════════════════════════════════════════════════════════════════════════════
+
+  USB-C Pin  VBUS ──────────────────────────────[D2: SS54]──► 5V_BUS
+  USB-C Pin  GND  ──────────────────────────────────────────── GND
+  USB-C Pin  CC1  ──[R7: 5.1kΩ]──► GND   ← device-mode pull-down
+  USB-C Pin  CC2  ──[R8: 5.1kΩ]──► GND   ← device-mode pull-down
+  USB-C Pin  D–   ──[U6: USBLC6-2P6 ESD]──► ESP32 IO19 (USB D–)
+  USB-C Pin  D+   ──[U6: USBLC6-2P6 ESD]──► ESP32 IO20 (USB D+)
+  USB-C Shield ──────────────────────────────────────────────── GND
+
+  USBLC6-2P6 (U6) connections  [SOT23-6L]:
+    Pin 1 (I/O1) ── USB-C D–   (connector side)
+    Pin 2 (GND)  ── GND
+    Pin 3 (I/O2) ── USB-C D+   (connector side)
+    Pin 4 (VBUS) ── USB-C VBUS  (5V high-side clamp reference)
+    Pin 5 (I/O2) ── ESP32 IO20  (D+ MCU side)
+    Pin 6 (I/O1) ── ESP32 IO19  (D– MCU side)
+    Both I/O1 pins (1 & 6) are the two ends of the D– protection network.
+    Both I/O2 pins (3 & 5) are the two ends of the D+ protection network.
+    TVS diodes clamp each line to GND (low) and VBUS (high) during ESD events.
+    Capacitance: 3.5pF max per line to GND (compliant with USB 2.0 full-speed).
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 3. CAN BUS  (U3: SN65HVD230DR  +  J1: SM04B-GHS-TB JST GH 4-pin)
+════════════════════════════════════════════════════════════════════════════════
+
+  SN65HVD230DR SOIC-8:
+
+                    ┌──────────────────┐
+  ESP32 IO16 TX ──►│ D   (pin 1)      │
+             GND ───│ GND (pin 2)      │ CANH (pin 7) ──────┬───────────► J1 Pin 2
+           3.3V ────│ VCC (pin 3)      │ CANL (pin 6) ──────┼─┬─────────► J1 Pin 3
+  ESP32 IO17 RX ◄──│ R   (pin 4)      │                     │ │
+                    │ Vref(pin 5) ─────────────────────── TP_VREF (1.65V = VCC/2)
+             GND ───│ RS  (pin 8) ─────┘   ← tied to GND → high-speed mode (1 Mbps)
+                    └──────────────────┘   └── TP_CANH     └── TP_CANL
+                    └──────────────────┘
+
+  ⚠ C_CAN: 100nF 0402 from VCC to GND — NOT IN SCHEMATIC (needs to be added)
+
+  DroneCAN JST GH 4-pin — DUAL PORT (J1 and J1B), both wired to identical nets:
+  (Allows daisy-chain bus topology without Y-splitter cables)
+
+    J1  (Port 1 — e.g. cable IN from upstream node):
+      Pin 1: +5V  ──┐
+      Pin 2: CANH ──┼─── shared CAN_H net ──► SN65HVD230 CANH
+      Pin 3: CANL ──┼─── shared CAN_L net ──► SN65HVD230 CANL
+      Pin 4: GND  ──┤
+
+    J1B (Port 2 — e.g. cable OUT to downstream node):
+      Pin 1: +5V  ──┤
+      Pin 2: CANH ──┤── same CAN_H net
+      Pin 3: CANL ──┤── same CAN_L net
+      Pin 4: GND  ──┘
+
+    Shared +5V rail:
+      Both J1/J1B Pin 1 ──[D3: SS54]──► 5V_BUS  ← accepts power from CAN bus
+      (board can also supply 5V onto bus when XT30 is active — see power OR-ing)
+
+  CAN Bus Termination (optional, end-of-line only):
+    CANH ──[R9: 120Ω]──[CAN_TERM1: solder jumper, default OPEN]── CANL
+    Close CAN_TERM1 only when this board is at the physical end of the CAN cable run.
+    A properly terminated DroneCAN bus has exactly 120Ω at each physical cable end.
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 4. IMU — ISM6HG256X  (U2, LGA-14L, SPI Mode)
+════════════════════════════════════════════════════════════════════════════════
+
+  Pin connections (bottom-view orientation from datasheet):
+
+    CS       (pin 12) ◄──────────────── ESP32 IO21   ← active-low chip select
+    SCL      (pin 13) ◄──────────────── ESP32 IO36   ← SPI clock
+    SDA      (pin 14) ◄──────────────── ESP32 IO35   ← SPI MOSI
+    SDO/TA0  (pin  1) ──────────────►  ESP32 IO37   ← SPI MISO
+    INT1     (pin  4) ──────────────►  ESP32 IO38   ← data-ready interrupt
+    INT2     (pin  X) ──────────────►  ESP32 IO39   ← FIFO watermark interrupt
+    VDD      (pin  8) ──────────────── 3.3V
+    VDDIO    (pin  5) ──────────────── 3.3V
+    GND      (pin  6) ──────────────── GND
+    GND      (pin  7) ──────────────── GND
+    SDO_aux  (pin 11) ── NC
+    OCS_aux  (pin 10) ── NC
+    SDx      (pin  2) ── NC
+    SCx      (pin  3) ── NC
+
+  IMU Decoupling (place within 0.5mm of pads):
+    C12: 100nF 0402 — VDD  (pin 8) to GND
+    C13: 100nF 0402 — VDDIO(pin 5) to GND
+    ⚠ IMU bulk cap (10µF) — NOT IN SCHEMATIC (needs to be added; C10 in schematic is the ESP32 bulk cap)
+
+  Pull-up on CS:
+    ⚠ R_CS: 10kΩ 0402 from IO21 / CS pin to 3.3V — NOT FOUND IN SCHEMATIC (needs to be added)
+
+  INT1 function: configurable — typical use: data-ready at selected ODR
+                 (fires at e.g. 416 Hz when new accel+gyro sample available)
+  INT2 function: configurable — typical use: FIFO watermark
+                 (fires when FIFO reaches set level, enables batch SPI reads)
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 5. ANALOG INPUT CHANNELS  ×3  (J4, J5, J6 — 3-pin 0.1" / 2.54mm headers)
+════════════════════════════════════════════════════════════════════════════════
+
+  Purpose: connect sensors or potentiometers outputting 0–5V.
+  Voltage divider scales signal to 0–3.33V for ESP32 ADC (max 3.3V).
+  Solder jumper bypasses divider for direct 0–3.3V sensor use.
+
+  Header pinout (each J4/J5/J6):
+    Pin 1: 5V_BUS  ← sensor power (nominally 5V, see power note above)
+    Pin 2: GND
+    Pin 3: Signal  (analog voltage in)
+
+  Circuit (shown for CH_AN1, identical for CH_AN2 and CH_AN3):
+
+  Signal Pin ──┬──────────────[JP2: solder jumper, default OPEN]──────────────┐
+               │                                                               │
+               └──[R15: 10kΩ 1%]────────────────────────────────────────────┐ │
+                                                                              ▼ ▼
+                                                                    ESP32 IO1 (ADC1_CH0)
+                                                                              │
+                                                                   ⚠[R_BOT: 20kΩ 1%] — NOT IN SCHEMATIC
+                                                                   ⚠[C_AA: 100nF — anti-alias] — NOT IN SCHEMATIC
+                                                                              │
+                                                                             GND
+
+  With JP OPEN  (default): Vsig × 20k/(10k+20k) = Vsig × 0.667
+                            5.0V in → 3.33V at ADC  ✓ (full 5V range usable)
+  With JP CLOSED (bypass): Signal connects directly to ESP32 ADC.
+                            Use ONLY with ≤3.3V signals. ESP32 absolute max = 3.6V.
+
+  Channel mapping:
+    J4 (CH_AN1) Signal ── JP2 / R15 / (R_BOT missing) ──► IO1  (ADC1_CH0)
+    J5 (CH_AN2) Signal ── JP3 / R16 / (R_BOT missing) ──► IO2  (ADC1_CH1)
+    J6 (CH_AN3) Signal ── JP4 / R17 / (R_BOT missing) ──► IO3  (ADC1_CH2)
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 6. PWM OUTPUT CHANNELS  ×3  (J7, J8, J9 — 3-pin 0.1" / 2.54mm headers)
+════════════════════════════════════════════════════════════════════════════════
+
+  Purpose: drive servos, ESCs, or other 3.3V-logic PWM loads.
+  No voltage divider. ESP32 GPIO drives signal pin directly (3.3V logic).
+  Series resistor (R_S) limits GPIO short-circuit current.
+
+  Header pinout (each J7/J8/J9):
+    Pin 1: 5V_BUS  ← actuator power
+    Pin 2: GND
+    Pin 3: Signal  (PWM output, 3.3V logic level)
+
+  Circuit (shown for CH_PWM1, identical for CH_PWM2 and CH_PWM3):
+
+    ESP32 IO4 ──[R12: 33Ω series]──► Signal Pin (J7 Pin 3)
+
+  Channel mapping:
+    J7 (CH_PWM1) ── R12 ──► IO4   (LEDC ch0 / MCPWM capable)
+    J8 (CH_PWM2) ── R13 ──► IO5   (LEDC ch1 / MCPWM capable)
+    J9 (CH_PWM3) ── R14 ──► IO6   (LEDC ch2 / MCPWM capable)
+
+  NOTE: Output is 3.3V logic. Most modern ESCs and servos accept 3.3V PWM.
+        If 5V PWM is required, add an external level shifter between the header
+        and the load — not implemented on this board.
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 7. QWIIC I2C CONNECTORS  (J11 — SM04B-SRSS-TB, JST SH 1.0mm 4-pin)
+════════════════════════════════════════════════════════════════════════════════
+
+  Two independent I2C buses — use when devices share an address or need
+  different bus speeds.
+  ⚠ Only one Qwiic connector (J11) is currently in the schematic. Second connector (J12 or J10) needs to be added.
+
+  J11 — I2C0  (IO8 / IO9):
+    Pin 1: GND
+    Pin 2: 3.3V
+    Pin 3: SDA ──[R18: 4.7kΩ pull-up to 3.3V]──► ESP32 IO8
+    Pin 4: SCL ──[R19: 4.7kΩ pull-up to 3.3V]──► ESP32 IO9
+    ⚠ C_QW: 100nF 0402 from 3.3V to GND — NOT IN SCHEMATIC (needs to be added)
+
+  ⚠ J11B (I2C1) — NOT IN SCHEMATIC (needs to be added, IO10 / IO11):
+    Pin 1: GND
+    Pin 2: 3.3V
+    Pin 3: SDA ──[R_SDA2: 4.7kΩ pull-up to 3.3V]──► ESP32 IO10
+    Pin 4: SCL ──[R_SCL2: 4.7kΩ pull-up to 3.3V]──► ESP32 IO11
+    ⚠ C_QW2: 100nF 0402 from 3.3V to GND — NOT IN SCHEMATIC
+
+  Pull-up note: 4.7kΩ on each bus. If Qwiic devices also have pull-ups the
+  combined parallel resistance will be lower — acceptable for most devices.
+  For 3+ devices on one bus, cut pull-ups on the Qwiic modules and rely on
+  the on-board resistors only.
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 8. ESP32-S3-WROOM-1-N8  (U1) — FULL GPIO MAP
+════════════════════════════════════════════════════════════════════════════════
+
+  POWER:
+    Module Pin 1  (GND)   ── GND
+    Module Pin 40 (GND)   ── GND
+    Module Pin 2  (3V3)   ── 3.3V
+    3.3V ──[C9:  100nF]── GND  ← HF decoupling near module
+    ⚠ C18, C19: 100nF HF decoupling ×2 — NOT IN SCHEMATIC (only C9 present; add 2 more)
+    3.3V ──[C10:  22µF]── GND  ← bulk  (⚠ plan called for 10µF; schematic has 22µF)
+    3.3V ──[C3:    1µF]── GND  ← mid-freq decoupling (in schematic, not in original plan)
+
+  ENABLE / RESET:
+    EN pin ──[R_EN1: 10kΩ]── 3.3V   ← hold HIGH normally
+    EN pin ──[SW2: RESET button]─── GND   (momentary LOW resets ESP32)
+
+  BOOT (DOWNLOAD MODE):
+    IO0 ──[R_BOOT1: 10kΩ]── 3.3V   ← pulled HIGH, SPI boot mode
+    IO0 ──[SW1: BOOT button]────── GND   (hold LOW during reset → USB download)
+
+  USB (Native USB 2.0 OTG full-speed):
+    IO19 ── USB D– ──[U6 ESD]──► J12 USB-C D–
+    IO20 ── USB D+ ──[U6 ESD]──► J12 USB-C D+
+
+  CAN (TWAI peripheral — ISO 11898-1):
+    IO16 (TX) ──┬──► SN65HVD230 D pin 1      TP_CAN_TX
+                └── TP_CAN_TX
+    IO17 (RX) ◄─┬── SN65HVD230 R pin 4
+                └── TP_CAN_RX
+
+  IMU SPI (SPI2 peripheral):
+    IO36 (SCLK) ──► ISM6HG256X SCL  pin 13
+    IO35 (MOSI) ──► ISM6HG256X SDA  pin 14
+    IO37 (MISO) ◄── ISM6HG256X SDO  pin 1
+    IO21 (CS)   ──► ISM6HG256X CS   pin 12   [active low, 10kΩ pull-up]  TP_IMU_CS
+    IO36 (SCLK) ──► ISM6HG256X SCL  pin 13                               TP_IMU_CLK
+    IO38 (INT)  ◄── ISM6HG256X INT1 pin 4                                TP_INT1
+    IO39 (INT)  ◄── ISM6HG256X INT2                                      TP_INT2
+
+  QWIIC I2C0 (I2C0 peripheral):
+    IO8  (SDA) ──[R18: 4.7kΩ to 3.3V]──► J11 Qwiic Pin 3
+    IO9  (SCL) ──[R19: 4.7kΩ to 3.3V]──► J11 Qwiic Pin 4
+
+  ⚠ QWIIC I2C1 (I2C1 peripheral) — NOT IN SCHEMATIC:
+    IO10 (SDA) ──[R_SDA2: 4.7kΩ to 3.3V]──► (add J connector) Pin 3
+    IO11 (SCL) ──[R_SCL2: 4.7kΩ to 3.3V]──► (add J connector) Pin 4
+
+  ANALOG INPUTS (ADC1, 12-bit, 0–3.3V after divider):
+    IO1 (ADC1_CH0) ◄── J4 CH_AN1 signal (via R15/JP2 divider)
+    IO2 (ADC1_CH1) ◄── J5 CH_AN2 signal (via R16/JP3 divider)
+    IO3 (ADC1_CH2) ◄── J6 CH_AN3 signal (via R17/JP4 divider)
+
+  PWM OUTPUTS (LEDC / MCPWM):
+    IO4 ──[R12: 33Ω]──► J7 CH_PWM1 signal
+    IO5 ──[R13: 33Ω]──► J8 CH_PWM2 signal
+    IO6 ──[R14: 33Ω]──► J9 CH_PWM3 signal
+
+  STATUS LED:
+    IO15 ──[R23: 100Ω]──► anode ─┤D4: Red├─ cathode ── GND  (⚠ plan had 330Ω blue LED)
+
+  AVAILABLE GPIOS (unassigned, broken out or unused):
+    IO7, IO12, IO13, IO14, IO33, IO34, IO40, IO41, IO42, IO45, IO46, IO47, IO48
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 8b. ESP32-S3-WROOM-1-N8 — FULL GPIO CAPABILITY REFERENCE
+════════════════════════════════════════════════════════════════════════════════
+
+  GPIO    Board Assignment          Peripheral        Capabilities & Constraints
+  ──────  ────────────────────────  ────────────────  ────────────────────────────────────────────
+  IO0     BOOT button (SW1)         Strapping         HIGH at boot → SPI flash (normal run)
+                                                      LOW at boot → USB/UART download mode
+                                                      10kΩ pull-up on board; do not drive at reset
+
+  IO1     AN1 analog in (J4)        ADC1_CH0          12-bit ADC 0–3.3V; also TOUCH1, LEDC, I2C
+  IO2     AN2 analog in (J5)        ADC1_CH1          12-bit ADC 0–3.3V; also TOUCH2, LEDC, I2C
+  IO3     AN3 analog in (J6)        ADC1_CH2          12-bit ADC 0–3.3V; also TOUCH3; strapping pin
+  IO4     PWM1 out (J7)             LEDC / MCPWM      Also ADC1_CH3, TOUCH4
+  IO5     PWM2 out (J8)             LEDC / MCPWM      Also ADC1_CH4, TOUCH5
+  IO6     PWM3 out (J9)             LEDC / MCPWM      Also ADC1_CH5, TOUCH6
+  IO7     AVAILABLE                 —                 LEDC, I2C, SPI; ADC1_CH6, TOUCH7
+
+  IO8     Qwiic SDA                 I2C0 SDA          4.7kΩ pull-up on board; ADC1_CH7, TOUCH8
+  IO9     Qwiic SCL                 I2C0 SCL          4.7kΩ pull-up on board; ADC1_CH8, TOUCH9
+  IO10    Qwiic SDA (I2C1)          I2C1 SDA          4.7kΩ pull-up on board; ADC1_CH9, TOUCH10
+  IO11    Qwiic SCL (I2C1)          I2C1 SCL          4.7kΩ pull-up on board; TOUCH11
+  IO12    AVAILABLE                 —                 LEDC, I2C, SPI (FSPI_WP); TOUCH12
+  IO13    AVAILABLE                 —                 LEDC, I2C, SPI (FSPI_HD); TOUCH13
+  IO14    AVAILABLE                 —                 LEDC, I2C, SPI (FSPI_CLK); TOUCH14
+
+  IO15    Status LED (LED2)         GPIO output       Also TOUCH15; ADC2_CH4 (⚠ avoid w/ WiFi)
+  IO16    CAN TX                    TWAI TX           General GPIO when CAN not in use
+  IO17    CAN RX                    TWAI RX           General GPIO when CAN not in use
+  IO18    AVAILABLE                 —                 LEDC, I2C, SPI; ADC2_CH7 (⚠ avoid w/ WiFi)
+  IO19    USB D−                    USB OTG           Fixed — do not use for GPIO
+  IO20    USB D+                    USB OTG           Fixed — do not use for GPIO
+  IO21    IMU SPI CS                SPI2 CS           Active-low; 10kΩ pull-up on board  TP_IMU_CS
+
+  IO33    AVAILABLE                 —                 GPIO, LEDC, I2C, SPI
+  IO34    AVAILABLE                 —                 GPIO, LEDC, I2C, SPI
+  IO35    IMU SPI MOSI              SPI2 MOSI         —
+  IO36    IMU SPI SCLK              SPI2 CLK          —
+  IO37    IMU SPI MISO              SPI2 MISO         —
+  IO38    IMU INT1 (data-ready)     GPIO input        Interrupt from ISM6HG256X pin 4
+  IO39    IMU INT2 (FIFO mark)      GPIO input        Interrupt from ISM6HG256X
+
+  IO40    AVAILABLE                 —                 GPIO, LEDC, I2C; JTAG TDO
+  IO41    AVAILABLE                 —                 GPIO, LEDC, I2C; JTAG TDI
+  IO42    AVAILABLE                 —                 GPIO, LEDC, I2C; JTAG TMS
+  IO43    AVAILABLE / TP_UART_TX    UART0 TX          Prints boot/debug log by default at startup
+  IO44    AVAILABLE                 UART0 RX          Default UART RX; reassign in firmware if needed
+  IO45    AVAILABLE                 —                 Strapping (VDD_SPI voltage sel); do not pull at boot
+  IO46    AVAILABLE                 —                 Strapping (ROM log); do not pull at boot
+  IO47    AVAILABLE                 —                 GPIO, LEDC, I2C, SPI
+  IO48    AVAILABLE                 —                 GPIO, LEDC, I2C, SPI
+
+  ─────────────────────────────────────────────────────────────────────────────
+  KEY RULES:
+  ─────────────────────────────────────────────────────────────────────────────
+  [1] ALL GPIOs are 3.3V logic — never apply 5V to any pin directly.
+
+  [2] ADC2 (IO11–IO20) cannot be used while Wi-Fi or BLE is active.
+      Use ADC1 (IO1–IO10) for all analog reads in wireless applications.
+
+  [3] Strapping pins (IO0, IO3, IO45, IO46) are sampled at reset. Do not
+      drive them with external logic during power-on or reset.
+
+  [4] SPI2 bus (IO21, IO35–IO37) is dedicated to the IMU. Additional SPI devices
+      can share the bus — add a separate CS line per device.
+
+  [5] IO43/IO44 output the ROM boot log at 115200 baud by default.
+      They are free to reassign after boot if needed for other functions.
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 9. BUTTONS & LEDs
+════════════════════════════════════════════════════════════════════════════════
+
+  SW1 — BOOT Button  (SMD tactile, PTS810 series):
+    3.3V ──[R_BOOT1: 10kΩ]──┬── IO0
+                            └──[SW1]── GND
+    Hold SW1 then press-release SW2 to enter USB download mode.
+
+  SW2 — RESET Button  (SMD tactile, PTS810 series):
+    3.3V ──[R_EN1: 10kΩ]────┬── EN
+                            └──[SW2]── GND
+    Press momentarily to reset ESP32.
+
+  LED1 — Power Good  (green, always on when 3.3V rail is live):
+    3.3V ──[R22: 1kΩ]──[D3: Green 0402]── GND
+
+  D4 — Status  (red, firmware-controlled):  (⚠ plan had blue LED2; schematic has red D4)
+    IO15 ──[R23: 100Ω]──[D4: Red 0402]── GND  (⚠ plan had 330Ω; schematic has 100Ω)
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 10. FULL COMPONENT REFERENCE LIST  (KiCad footprints in brackets)
+════════════════════════════════════════════════════════════════════════════════
+
+  ACTIVE ICs:
+    U1      ESP32-S3-WROOM-1-N8          Main MCU module (PCB antenna)
+                                         [RF_Module:ESP32-S3-WROOM-1]
+    U2      ISM6HG256XTRR                6-axis IMU (LGA-14L, 2.5×3mm)
+                                         [Package_LGA:LGA-14_2.5x3mm_P0.5mm_ClockwisePinNumbering]
+    U3      SN65HVD230DR                 CAN transceiver (SOIC-8)
+                                         [Package_SO:SOIC-8_3.9x4.9mm_P1.27mm]
+    U4      TPS54360B-Q1DDAR             HV buck 60V→5.0V, 3.5A (HSOP-8 with PowerPAD)
+                                         [Package_SO:HSOP-8-1EP_3.9x4.9mm_P1.27mm_EP2.41x3.1mm_ThermalVias]
+    U5      AP2112K-3.3                  3.3V LDO, 600mA, fixed output (SOT25)
+                                         [Package_TO_SOT_SMD:SOT-23-5]
+    U6      USBLC6-2P6                   USB ESD protection (SOT-23-6L, ST)
+                                         [Package_TO_SOT_SMD:SOT-23-6]
+
+  CONNECTORS:
+    J1      SM04B-GHS-TB(LF)(SN)         CAN port 1, JST GH 4-pin 1.25mm horiz
+                                         [Connector_JST:JST_GH_SM04B-GHS-TB_1x04-1MM25_P1.25mm_Horizontal]
+    J2     SM04B-GHS-TB(LF)(SN)         CAN port 2, JST GH 4-pin 1.25mm horiz
+                                         [Connector_JST:JST_GH_SM04B-GHS-TB_1x04-1MM25_P1.25mm_Horizontal]
+    P1      HRO TYPE-C-31-M-12           USB-C 2.0 SMD, 16-pin, horizontal
+                                         [USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12]
+                                         Works with standard 1.6mm PCB. Very cheap on LCSC.
+    J3      XT30PW-M (Amass)             XT30 SMD male power input
+                                         [Custom — download from Snapeda, search XT30PW-M]
+    J4      3-pin 2.54mm header          CH_AN1 analog input
+                                         [Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical]
+    J5      3-pin 2.54mm header          CH_AN2 analog input
+                                         [Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical]
+    J6      3-pin 2.54mm header          CH_AN3 analog input
+                                         [Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical]
+    J7      3-pin 2.54mm header          CH_PWM1 output
+                                         [Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical]
+    J8      3-pin 2.54mm header          CH_PWM2 output
+                                         [Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical]
+    J9      3-pin 2.54mm header          CH_PWM3 output
+                                         [Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical]
+    J10     SM04B-SRSS-TB(LF)(SN)        Qwiic I2C0, JST SH 4-pin 1.0mm horiz
+                                         [Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MM_P1.00mm_Horizontal]
+    J11     SM04B-SRSS-TB(LF)(SN)        Qwiic I2C1, JST SH 4-pin 1.0mm horiz
+                                         [Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MM_P1.00mm_Horizontal]
+
+  POWER PROTECTION:
+    D7      SS56  (SMA / DO-214AC)        Series Schottky 60V 5A, reverse polarity
+                                         [Diode_SMD:D_SMA]
+    D_TVS1  SMBJ58A  (SMB / DO-214AA)   TVS clamp on XT30 input to GND
+                                         [Diode_SMD:D_SMB]
+    F1      C41367225  (1206)            Resettable fuse — XT30 input protection
+                                         [Fuse:Fuse_1206_3216Metric]
+
+  ORING DIODES:
+    D5      SS54  (SMA / DO-214AC)       HV buck output → 5V_BUS, 5A 40V
+                                         [Diode_SMD:D_SMA]
+    D2      SS54  (SMA / DO-214AC)       USB-C VBUS    → 5V_BUS, 5A 40V
+                                         [Diode_SMD:D_SMA]
+    D6      SS54  (SMA / DO-214AC)       CAN JST Pin1  → 5V_BUS, 5A 40V
+                                         [Diode_SMD:D_SMA]
+
+  INDUCTORS:
+    L1      Bourns SRR1260A-8R2M         8.2µH 5A, HV buck, 12.5×12.5×6mm SMD
+                                         [Inductor_SMD:L_Bourns_SRR1260A]
+                                         Pad layout per datasheet: 2× 5.4×2.9mm, 6.8mm pitch
+
+  CATCH DIODE — HV BUCK:
+    D8      SS56  (SMA / DO-214AC)       SW→GND catch diode, 60V 5A Schottky
+                                         [Diode_SMD:D_SMA]
+
+  CAPACITORS — HV BUCK (TPS54360B-Q1):
+    C1, C2  2.2µF 100V X5R  1206        Input (×2)                             [Capacitor_SMD:C_1206_3216Metric]
+    C6       47µF  10V X5R  1206        Output bulk                            [Capacitor_SMD:C_1206_3216Metric]
+    C7       47µF  10V X5R  1206        Output bulk                            [Capacitor_SMD:C_1206_3216Metric]
+    C4      100nF       0402            BOOT pin bootstrap                     [Capacitor_SMD:C_0402_1005Metric]
+
+  CAPACITORS — LDO (AP2112K-3.3):
+    ⚠ C_VIN  1µF 10V X5R  0402         VIN decoupling — NOT IN SCHEMATIC (add near U5 pin 1)
+    ⚠ C_VOUT 4.7µF 10V X5R  0402       VOUT decoupling — NOT IN SCHEMATIC (add near U5 pin 5)
+
+  CAPACITORS — DECOUPLING:
+    C12, C13  100nF 0402                IMU VDD, VDDIO                         [Capacitor_SMD:C_0402_1005Metric]
+    ⚠ (IMU bulk 10µF) — NOT IN SCHEMATIC (add 10µF 0402 on IMU VDD)
+    ⚠ C_CAN  100nF 0402                SN65HVD230 VCC — NOT IN SCHEMATIC
+    C9        100nF 0402                ESP32 3.3V HF (1 of 3 placed)          [Capacitor_SMD:C_0402_1005Metric]
+    ⚠ (2× 100nF HF) — NOT IN SCHEMATIC (add C_ESP2, C_ESP3 near U1)
+    C10        22µF 0402                ESP32 3.3V bulk (⚠ plan had 10µF)      [Capacitor_SMD:C_0402_1005Metric]
+    C3          1µF 0402                ESP32 3.3V mid-freq (added in schematic)[Capacitor_SMD:C_0402_1005Metric]
+    ⚠ C_QW  100nF 0402                 Qwiic I2C0 3.3V decoupling — NOT IN SCHEMATIC
+    ⚠ C_QW2 100nF 0402                 Qwiic I2C1 3.3V decoupling — NOT IN SCHEMATIC
+
+  CAPACITORS — ANALOG:
+    ⚠ (3× 100nF anti-alias) — NOT IN SCHEMATIC (add on ADC inputs IO1/IO2/IO3)
+
+  RESISTORS — HV BUCK:
+    R5      59kΩ   1%  0402             FB divider top  (sets Vout ≈ 5.43V)    [Resistor_SMD:R_0402_1005Metric]
+    R6      10.2kΩ 1%  0402             FB divider bot                         [Resistor_SMD:R_0402_1005Metric]
+    R3      162kΩ      0402             Switching frequency (~600 kHz)         [Resistor_SMD:R_0402_1005Metric]
+    R1      523kΩ  1%  0402             EN UVLO divider top  (UVLO ≈ 8.5V)     [Resistor_SMD:R_0402_1005Metric]
+    R2      84.5kΩ 1%  0402             EN UVLO divider bot                    [Resistor_SMD:R_0402_1005Metric]
+    R4      13kΩ       0402             COMP loop compensation (series R)      [Resistor_SMD:R_0402_1005Metric]
+
+  CAPACITORS — HV BUCK COMP:
+    C5      6800pF     0402             COMP loop compensation (series C)      [Capacitor_SMD:C_0402_1005Metric]
+    C8        39pF     0402             COMP high-freq pole (parallel with R4) [Capacitor_SMD:C_0402_1005Metric]
+
+  RESISTORS — USB:
+    R7, R8  5.1kΩ 0402 (×2)            CC1, CC2 device-mode pull-downs        [Resistor_SMD:R_0402_1005Metric]
+
+  RESISTORS — ANALOG INPUTS:
+    R15–R17  10kΩ  1%  0402 (×3)       Voltage divider top (analog channels)  [Resistor_SMD:R_0402_1005Metric]
+    ⚠ R_BOT ×3  20kΩ  1%  0402        Voltage divider bot — NOT IN SCHEMATIC
+
+  RESISTORS — PWM OUTPUTS:
+    R12–R14  33Ω  0402 (×3)            GPIO series resistors                  [Resistor_SMD:R_0402_1005Metric]
+
+  RESISTORS — I2C:
+    R18     4.7kΩ 0402                  Qwiic I2C0 SDA pull-up to 3.3V        [Resistor_SMD:R_0402_1005Metric]
+    R19     4.7kΩ 0402                  Qwiic I2C0 SCL pull-up to 3.3V        [Resistor_SMD:R_0402_1005Metric]
+    ⚠ R_SDA2  4.7kΩ 0402               Qwiic I2C1 SDA pull-up — NOT IN SCHEMATIC
+    ⚠ R_SCL2  4.7kΩ 0402               Qwiic I2C1 SCL pull-up — NOT IN SCHEMATIC
+
+  RESISTORS — IMU:
+    ⚠ R_CS  10kΩ  0402                 IMU CS pull-up to 3.3V — NOT IN SCHEMATIC
+
+  RESISTORS — UI/MISC:
+    R22     1kΩ   0402                  Power LED current limit                [Resistor_SMD:R_0402_1005Metric]
+    R23     100Ω  0402                  Status LED current limit (⚠ plan had 330Ω) [Resistor_SMD:R_0402_1005Metric]
+    R_EN1   10kΩ  0402                  ESP32 EN pull-up                       [Resistor_SMD:R_0402_1005Metric]
+    R_BOOT1 10kΩ  0402                  ESP32 IO0 pull-up                      [Resistor_SMD:R_0402_1005Metric]
+
+  SOLDER JUMPERS:
+    CAN_TERM1  2-pad  (CAN termination — OPEN by default)                      [Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm]
+    JP2        2-pad  (CH_AN1 divider bypass — OPEN by default)                [Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm]
+    JP3        2-pad  (CH_AN2 divider bypass — OPEN by default)                [Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm]
+    JP4        2-pad  (CH_AN3 divider bypass — OPEN by default)                [Jumper:SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm]
+
+  BUTTONS:
+    SW1      SMD_4.2x3.2mm_h2.5mm  (BOOT, SMD tactile)
+    SW2      SMD_4.2x3.2mm_h2.5mm  (RESET, SMD tactile)
+
+  LEDs:
+    D3       Green 0402               Power indicator (3.3V rail)               [LED_SMD:LED_0402_1005Metric]
+    D4       Red   0402               Status (IO15) (⚠ plan had blue LED)       [LED_SMD:LED_0402_1005Metric]
+
+  TEST POINTS:
+  Drill sizes: 1.0mm for all through-hole points (fits Saleae flying leads and scope hooks)
+               SMD 1.5mm pad for rarely-probed points (no drill needed)
+
+    TP_GND       GND                  Ground ref — place near board edge, multiple ok
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_3V3       3.3V rail            LDO output; verify 3.3V under load
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_5VBUS     5V_BUS               OR-ing junction; expect ~4.6V from XT30, ~4.5V USB
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_VBUCK     Buck VOUT (pre-D1)   Raw buck output before D1; expect 5.0V
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_SW        Buck SW node         Switching waveform; ×10 scope probe, expect ~600kHz
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_CANH      CAN bus high         Idle ~2.5V, dominant ~3.5V
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_CANL      CAN bus low          Idle ~2.5V, dominant ~1.5V
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_CAN_TX    IO16 (logic TX)      3.3V logic from ESP32 to SN65HVD230
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_CAN_RX    IO17 (logic RX)      3.3V logic from SN65HVD230 to ESP32
+                                      [TestPoint:TestPoint_THTchoPad_D1.8mm_Drill1.0mm]
+    TP_INT1      IO38 (IMU INT1)      Data-ready interrupt; pulses at IMU ODR
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_INT2      IO39 (IMU INT2)      FIFO watermark interrupt
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_IMU_CS    IO21 (IMU CS)        SPI CS; use as scope trigger for SPI transactions
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_IMU_CLK   IO36 (IMU SCLK)     SPI clock; verify configured rate
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_UART_TX   IO43 (UART0 TX)     Boot log and debug UART at 115200 baud
+                                      [TestPoint:TestPoint_THTPad_D1.8mm_Drill1.0mm]
+    TP_VREF      SN65HVD230 pin 5     VCC/2 = 1.65V; confirms IC bias, rarely probed
+                                      [TestPoint:TestPoint_Pad_D1.5mm]
+
+
+
+════════════════════════════════════════════════════════════════════════════════
+ 11. DESIGN NOTES & WARNINGS
+════════════════════════════════════════════════════════════════════════════════
+
+  [1] ANTENNA KEEPOUT: ESP32-S3-WROOM-1 PCB antenna area requires a copper-free
+      keepout zone on the carrier board. No fills, traces, or vias allowed in
+      the antenna projection area (approximately 3.5mm × 18mm at module end).
+
+  [2] IMU PLACEMENT: Place ISM6HG256X away from power inductor L1.
+      Switching inductors generate AC magnetic fields that induce noise in
+      gyroscope and accelerometer measurements. Recommend ≥ 10mm clearance.
+      Ideal placement: geometric center of board for balanced vibration response.
+
+  [3] ANALOG SOLDER JUMPERS (JP2–JP4): Default OPEN = divider active, 0–5V
+      input range. CLOSE to bypass divider for 0–3.3V signals only.
+      Silkscreen each jumper with the channel number and "5V MAX / 3.3V BYPASS".
+
+  [4] CAN TERMINATION (CAN_TERM1): Only nodes at the physical ends of the CAN cable
+      need 120Ω termination. Leave CAN_TERM1 OPEN if any other device on the bus
+      provides termination, or if this board is not at a cable end.
+
+  [5] REVERSE POLARITY PROTECTION: SS56 Schottky (D7) in series with XT30+
+      provides basic reverse polarity protection. Vf ≈ 0.4–0.5V. Combined with
+      SMBJ58A TVS (D_TVS1), input is protected from reverse voltage and transient spikes.
+      For absolute protection at all voltages, consider a P-FET + zener clamp.
+
+  [6] 5V_BUS RAIL ACCURACY: When powered from XT30 via TPS54360B-Q1 (Vout ≈
+      5.43V), 5V_BUS ≈ 4.9V after D5 Schottky drop (~0.55V Vf). When powered
+      from USB-C or CAN bus (5.0V nominal), 5V_BUS ≈ 4.45V similarly.
+      Analog and PWM headers will supply whichever is present. Most servos
+      and sensors tolerate 4.5–5.5V. UVLO (R1/R2) prevents buck
+      startup below ~8.5V VIN, protecting against brownout on low batteries.
+
+  [7] PWM OUTPUT LEVELS: Signal pins on J7–J9 are 3.3V logic. Most ESCs (SBUS,
+      standard PWM) and modern servos accept 3.3V. If a load strictly requires
+      5V PWM logic, add an external level shifter (not on this board).
+
+  [8] IMU CS BOOT STATE: R_CS (10kΩ pull-up to 3.3V on IO21) ensures CS is
+      HIGH during ESP32 boot strapping sequence, preventing spurious SPI transactions
+      while IO21 is in high-impedance input mode. ⚠ R_CS is NOT IN SCHEMATIC — needs to be added.
+
+  [9] QWIIC PULL-UPS: R18 and R19 (4.7kΩ each) provide bus pull-ups for I2C0.
+      If connecting multiple Qwiic devices each with their own 4.7kΩ pull-ups,
+      the effective pull-up resistance lowers. For 3+ devices on the bus, consider
+      cutting/removing pull-up jumpers on the Qwiic devices and relying on these
+      onboard resistors only.
+
+  [10] TOTAL ESTIMATED CURRENT (3.3V rail, nominal operation):
+       ESP32-S3 active (WiFi TX): ~350 mA peak, ~150 mA average
+       ISM6HG256X: ~0.8 mA
+       SN65HVD230: ~5 mA
+       LEDs: ~3 mA
+       Qwiic device (typical): ~10 mA (varies by device)
+       ─────────────────────────────────────────────────────
+       Total 3.3V peak: ~370 mA  (AP2112K rated 600mA — adequate for burst WiFi duty cycles)
+
+================================================================================
+  END OF CIRCUIT DIAGRAM
+================================================================================

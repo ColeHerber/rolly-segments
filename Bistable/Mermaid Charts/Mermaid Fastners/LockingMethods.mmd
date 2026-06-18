@@ -1,0 +1,56 @@
+flowchart TB
+
+    subgraph VIB["Condition - Vibration / Rotation Risk"]
+        direction TB
+
+        V0{"Vibration or rotation risk?"}
+
+        V0 -->|"Low"| V1["Correct preload may be sufficient Use torque control and witness mark"]
+
+        V0 -->|"Moderate"| V2{"Joint must remain removable?"}
+        V2 -->|"Yes"| V3["Removable anaerobic threadlocker or qualified prevailing-torque fastener"]
+        V2 -->|"No"| V4["High-strength or permanent threadlocker Verify service temperature"]
+
+        V0 -->|"High or safety-critical"| V5{"Can a positive mechanical lock be used?"}
+        V5 -->|"Yes"| V6["All-metal prevailing-torque locknut Castellated nut and cotter pin Lockwire, tab lock, or locking insert"]
+        V5 -->|"No"| V7["Qualified adhesive locking plus inspection or redundant retention"]
+    end
+
+    subgraph ENV["Condition - Special Conditions"]
+        direction TB
+
+        AL{"Special conditions?"}
+
+        AL -->|"High temperature"| AL1["Avoid polymer-insert locknuts and adhesives beyond qualified temperature"]
+
+        AL -->|"Frequent disassembly"| AL2["Use reusable all-metal locknut or replace single-use locking element"]
+
+        AL -->|"Wet or corrosive"| AL3["Check galvanic compatibility Coating, drainage, and isolation"]
+
+        AL -->|"Preload-critical"| AL4["Locking does not replace proper preload and joint-stiffness design"]
+
+        AL -->|"None"| AL5["Proceed with selected locking method"]
+    end
+
+    subgraph WASH["Condition - Washer Selection"]
+        direction TB
+
+        W0{"Considering a washer?"}
+
+        W0 -->|"Split helical lock washer"| W1["Do not use as the primary locking method"]
+
+        W0 -->|"Tooth or star washer"| W2["Limited locking by surface biting Use only when surface damage is acceptable"]
+
+        W0 -->|"Belleville washer"| W3["Maintains clamp load or absorbs deflection Not inherently a rotational lock"]
+
+        W0 -->|"Wave washer"| W7["Takes up axial play or provides light preload Not a primary vibration lock"]
+
+        W0 -->|"Wedge-lock washer pair"| W4["May provide vibration locking Qualify for load and environment"]
+
+        W0 -->|"Plain washer"| W5["Use for bearing-area distribution Surface protection or embedment control"]
+
+        W0 -->|"No washer"| W6["Verify adequate bearing area under bolt head or nut"]
+    end
+
+    VIB ~~~ ENV
+    ENV ~~~ WASH

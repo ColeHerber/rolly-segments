@@ -1,0 +1,14 @@
+# Target labels
+ picotool-populate
+# Source files and their labels
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/CMakeFiles/picotool-populate
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/CMakeFiles/picotool-populate.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/CMakeFiles/picotool-populate-complete.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-build.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-configure.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-download.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-install.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-mkdir.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-patch.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-test.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/_deps/picotool-subbuild/picotool-populate-prefix/src/picotool-populate-stamp/picotool-populate-update.rule

@@ -1,0 +1,1044 @@
+{
+    "$schema": "https://schemas.kicad.org/erc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-06-02T14:32:13",
+    "ignored_checks": [
+        {
+            "description": "Global label only appears once in the schematic",
+            "key": "single_global_label"
+        },
+        {
+            "description": "Four connection points are joined together",
+            "key": "four_way_junction"
+        },
+        {
+            "description": "SPICE model issue",
+            "key": "simulation_model_issue"
+        },
+        {
+            "description": "Assigned footprint doesn't match footprint filters",
+            "key": "footprint_filter"
+        }
+    ],
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "10.0.3",
+    "sheets": [
+        {
+            "path": "/",
+            "uuid_path": "/0a6397f2-6f0c-4660-b3df-1dcc930b79b4",
+            "violations": [
+                {
+                    "description": "Input Power pin not driven by any Output Power pins",
+                    "items": [
+                        {
+                            "description": "Symbol U5 Pin 1 [VIN, Power input, Line]",
+                            "pos": {
+                                "x": 0.4826,
+                                "y": 3.0861
+                            },
+                            "uuid": "e55a08ec-4e8c-4b8f-9efb-ab45fb50f6b0"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "power_pin_not_driven"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0508 mm",
+                            "pos": {
+                                "x": 0.5461,
+                                "y": 4.2164
+                            },
+                            "uuid": "61323191-fc72-4bac-b0af-56b47ae36b31"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.0889 mm",
+                            "pos": {
+                                "x": 0.3429,
+                                "y": 4.2672
+                            },
+                            "uuid": "885cc9f7-087b-46d7-8bf1-1cd9ca75cf8c"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0889 mm",
+                            "pos": {
+                                "x": 0.635,
+                                "y": 2.6162
+                            },
+                            "uuid": "1538acb2-d59b-4e3b-abdd-5aa7fa6b579e"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.0127 mm",
+                            "pos": {
+                                "x": 0.7239,
+                                "y": 2.5654
+                            },
+                            "uuid": "3a80a86a-c442-4445-8cf9-c5ce5ef25a00"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0508 mm",
+                            "pos": {
+                                "x": 0.6858,
+                                "y": 3.4671
+                            },
+                            "uuid": "51ec7dbf-1917-496d-bf85-d2599465f2b3"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0127 mm",
+                            "pos": {
+                                "x": 0.6858,
+                                "y": 3.7084
+                            },
+                            "uuid": "13ae954b-0a52-4872-ba86-c91d30d3ba43"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.1778 mm",
+                            "pos": {
+                                "x": 0.6858,
+                                "y": 3.7084
+                            },
+                            "uuid": "af4823c6-00da-419c-b62e-dd89b4926db4"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0635 mm",
+                            "pos": {
+                                "x": 0.7112,
+                                "y": 1.7018
+                            },
+                            "uuid": "1ded0810-7145-4bd7-b4d9-7e4e0072c957"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.1524 mm",
+                            "pos": {
+                                "x": 0.9144,
+                                "y": 1.7018
+                            },
+                            "uuid": "567fae48-3236-4561-b219-54b1a7c762e0"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0254 mm",
+                            "pos": {
+                                "x": 0.7112,
+                                "y": 2.1082
+                            },
+                            "uuid": "1f4af14e-77e1-4f90-8a5f-851f08d2dc51"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.3556 mm",
+                            "pos": {
+                                "x": 0.7239,
+                                "y": 2.3749
+                            },
+                            "uuid": "4779b2a1-7e7d-4f74-bdc4-ad1afd59b6f4"
+                        },
+                        {
+                            "description": "Vertical Wire, length 0.1397 mm",
+                            "pos": {
+                                "x": 0.7239,
+                                "y": 2.5146
+                            },
+                            "uuid": "9fbd060c-b934-4ac0-a486-fe3c11aadb01"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Input Power pin not driven by any Output Power pins",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 2 [VIN, Power input, Line]",
+                            "pos": {
+                                "x": 0.7239,
+                                "y": 2.54
+                            },
+                            "uuid": "d7d5531c-fe10-437e-ae95-6eb8c3c1bfa2"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "power_pin_not_driven"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.1143 mm",
+                            "pos": {
+                                "x": 0.7239,
+                                "y": 2.5908
+                            },
+                            "uuid": "301c8f5d-e8d7-4cb1-9154-2bf92c3e369b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.1016 mm",
+                            "pos": {
+                                "x": 0.762,
+                                "y": 1.6764
+                            },
+                            "uuid": "71dae6c0-86b4-4937-8057-2a9709336c54"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.0508 mm",
+                            "pos": {
+                                "x": 0.8636,
+                                "y": 1.6764
+                            },
+                            "uuid": "c62fe712-431b-429a-a895-4a836218096f"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.2159 mm",
+                            "pos": {
+                                "x": 0.7874,
+                                "y": 3.4544
+                            },
+                            "uuid": "1b5eca55-0ed3-4a9c-98e4-3de797dd3eae"
+                        },
+                        {
+                            "description": "Wire, length 0.1529 mm",
+                            "pos": {
+                                "x": 0.7874,
+                                "y": 3.4544
+                            },
+                            "uuid": "2faada67-8e67-42c2-903f-42f7eb2ac090"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Wire, length 0.1529 mm",
+                            "pos": {
+                                "x": 0.7874,
+                                "y": 3.4798
+                            },
+                            "uuid": "3e87788f-2385-4400-8841-ab36aa10ae1e"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.2159 mm",
+                            "pos": {
+                                "x": 1.0033,
+                                "y": 3.4798
+                            },
+                            "uuid": "4912b15e-6a14-490f-b9a6-09b18ad1ebec"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.1016 mm",
+                            "pos": {
+                                "x": 0.8128,
+                                "y": 2.1082
+                            },
+                            "uuid": "277811c0-6795-485a-a0ee-66d88bb2da15"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0254 mm",
+                            "pos": {
+                                "x": 0.8636,
+                                "y": 3.6576
+                            },
+                            "uuid": "4571f270-989c-4aae-b8d5-a78d4e4919d8"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.1778 mm",
+                            "pos": {
+                                "x": 0.6858,
+                                "y": 3.6576
+                            },
+                            "uuid": "684d2b29-be01-447f-8244-ed3b20fc8c8a"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0254 mm",
+                            "pos": {
+                                "x": 0.8763,
+                                "y": 4.2164
+                            },
+                            "uuid": "a937cfab-c5d2-4da9-b294-be329b1a4e8f"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U1 Pin 18 [IO10, Bidirectional, Line]",
+                            "pos": {
+                                "x": 0.9144,
+                                "y": 1.9812
+                            },
+                            "uuid": "e397bfe0-17b8-4a87-b760-3d4f6168ede6"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U1 Pin 19 [IO11, Bidirectional, Line]",
+                            "pos": {
+                                "x": 0.9144,
+                                "y": 2.0066
+                            },
+                            "uuid": "a215134e-c417-40aa-beba-82e7f72a7372"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Input Power pin not driven by any Output Power pins",
+                    "items": [
+                        {
+                            "description": "Symbol H1 Pin 1 [1, Input, Line]",
+                            "pos": {
+                                "x": 1.0795,
+                                "y": 1.1176
+                            },
+                            "uuid": "193dd21e-3ac6-4947-a041-eeef8ff4868b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "power_pin_not_driven"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.1143 mm",
+                            "pos": {
+                                "x": 1.1811,
+                                "y": 2.5908
+                            },
+                            "uuid": "6439b8af-5088-4d80-b8a4-004bed7fdfd5"
+                        },
+                        {
+                            "description": "Vertical Wire, length 0.0889 mm",
+                            "pos": {
+                                "x": 1.2954,
+                                "y": 2.5908
+                            },
+                            "uuid": "6b13fa3d-1ae9-4bfd-82d1-a5cde39a715b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U1 Pin 37 [TXD0, Bidirectional, Line]",
+                            "pos": {
+                                "x": 1.2192,
+                                "y": 1.6764
+                            },
+                            "uuid": "b4544f13-3300-47c4-9164-4badee8afc30"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U1 Pin 36 [RXD0, Bidirectional, Line]",
+                            "pos": {
+                                "x": 1.2192,
+                                "y": 1.7018
+                            },
+                            "uuid": "f75b2c91-7615-402a-8a29-fdd3eeac583c"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U1 Pin 11 [IO18, Bidirectional, Line]",
+                            "pos": {
+                                "x": 1.2192,
+                                "y": 1.7526
+                            },
+                            "uuid": "60c85b61-ab84-4f33-94da-b364241738d6"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0508 mm",
+                            "pos": {
+                                "x": 1.2319,
+                                "y": 2.4892
+                            },
+                            "uuid": "17174915-18bd-4001-a1a3-6b0a2d4e6f65"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.0508 mm",
+                            "pos": {
+                                "x": 1.2319,
+                                "y": 2.54
+                            },
+                            "uuid": "2941d8a7-98ed-44aa-80e4-bee6281b993b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0254 mm",
+                            "pos": {
+                                "x": 1.2954,
+                                "y": 2.7813
+                            },
+                            "uuid": "dfe6c491-27fb-4587-8f24-a6928916784e"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0635 mm",
+                            "pos": {
+                                "x": 1.4224,
+                                "y": 2.4892
+                            },
+                            "uuid": "2e1ef455-183c-43e7-aaf1-e11c1c5e096d"
+                        },
+                        {
+                            "description": "Vertical Wire, length 0.0254 mm",
+                            "pos": {
+                                "x": 1.4859,
+                                "y": 2.4892
+                            },
+                            "uuid": "412ee29b-9d01-418f-a45a-db5c50072278"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol XT302+2F1 Pin 1 [Pin_1, Passive, Line]",
+                            "pos": {
+                                "x": 1.6891,
+                                "y": 3.8989
+                            },
+                            "uuid": "e4cafb96-ed3b-41b2-a2c4-4c09691991b0"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol XT302+2F1 Pin 2 [Pin_2, Passive, Line]",
+                            "pos": {
+                                "x": 1.6891,
+                                "y": 3.9243
+                            },
+                            "uuid": "80cbafb4-2769-45b9-986b-275998b8eb83"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol XT302+2F1 Pin 3 [Pin_3, Passive, Line]",
+                            "pos": {
+                                "x": 1.6891,
+                                "y": 3.9497
+                            },
+                            "uuid": "f1d31495-b960-4068-87ba-a2f4f724b9b2"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol XT302+2F1 Pin 4 [Pin_4, Passive, Line]",
+                            "pos": {
+                                "x": 1.6891,
+                                "y": 3.9751
+                            },
+                            "uuid": "0474bc40-3ddd-4a4e-bf6c-e53369b47884"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol Xt302+2F2 Pin 1 [Pin_1, Passive, Line]",
+                            "pos": {
+                                "x": 1.8669,
+                                "y": 3.8989
+                            },
+                            "uuid": "e4cafb96-ed3b-41b2-a2c4-4c09691991b1"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol Xt302+2F2 Pin 2 [Pin_2, Passive, Line]",
+                            "pos": {
+                                "x": 1.8669,
+                                "y": 3.9243
+                            },
+                            "uuid": "80cbafb4-2769-45b9-986b-275998b8eb84"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol Xt302+2F2 Pin 3 [Pin_3, Passive, Line]",
+                            "pos": {
+                                "x": 1.8669,
+                                "y": 3.9497
+                            },
+                            "uuid": "f1d31495-b960-4068-87ba-a2f4f724b9b3"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol Xt302+2F2 Pin 4 [Pin_4, Passive, Line]",
+                            "pos": {
+                                "x": 1.8669,
+                                "y": 3.9751
+                            },
+                            "uuid": "0474bc40-3ddd-4a4e-bf6c-e53369b47885"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Label not connected",
+                    "items": [
+                        {
+                            "description": "Label 'ADC_CHANNELS'",
+                            "pos": {
+                                "x": 3.8227,
+                                "y": 1.7145
+                            },
+                            "uuid": "fac53d25-0845-4961-b520-501b3e2af5ed"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "label_dangling"
+                },
+                {
+                    "description": "Label not connected",
+                    "items": [
+                        {
+                            "description": "Label 'PWM_CHANNELS'",
+                            "pos": {
+                                "x": 3.8227,
+                                "y": 2.1971
+                            },
+                            "uuid": "a8f57eb1-0ee5-42f9-bc88-c4d82cac5848"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "label_dangling"
+                },
+                {
+                    "description": "Label not connected",
+                    "items": [
+                        {
+                            "description": "Label 'I2C connectors'",
+                            "pos": {
+                                "x": 3.8227,
+                                "y": 2.6289
+                            },
+                            "uuid": "19d2f451-574e-4046-9ea0-8cb27635469c"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "label_dangling"
+                },
+                {
+                    "description": "Label not connected",
+                    "items": [
+                        {
+                            "description": "Label 'CAN_Connectors'",
+                            "pos": {
+                                "x": 3.8227,
+                                "y": 3.3401
+                            },
+                            "uuid": "5f89a294-4bd6-4707-a30e-826f512919c0"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "label_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0635 mm",
+                            "pos": {
+                                "x": 4.064,
+                                "y": 2.286
+                            },
+                            "uuid": "2b64d283-ef2a-4d65-82a4-355e1f816c76"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0635 mm",
+                            "pos": {
+                                "x": 4.064,
+                                "y": 2.4003
+                            },
+                            "uuid": "30aeaa21-d762-4b05-9654-06ffc34bcc32"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0635 mm",
+                            "pos": {
+                                "x": 4.064,
+                                "y": 2.5146
+                            },
+                            "uuid": "ab17b8fa-82f7-4678-b4ca-719da696aac5"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Vertical Wire, length 0.0508 mm",
+                            "pos": {
+                                "x": 4.2037,
+                                "y": 1.8288
+                            },
+                            "uuid": "195d8ffc-3793-4c68-8f51-5cdffbf48826"
+                        },
+                        {
+                            "description": "Vertical Wire, length 0.0381 mm",
+                            "pos": {
+                                "x": 4.2037,
+                                "y": 1.7907
+                            },
+                            "uuid": "770f7fdf-d05b-4c7a-9858-8c16594a8dcc"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0127 mm",
+                            "pos": {
+                                "x": 4.2037,
+                                "y": 1.9939
+                            },
+                            "uuid": "36702cd4-e54b-422a-b484-a9bc2f8859a2"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.0889 mm",
+                            "pos": {
+                                "x": 4.2037,
+                                "y": 1.9431
+                            },
+                            "uuid": "462cb3bc-5e70-4bb5-aec7-a6642f7d042f"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.0889 mm",
+                            "pos": {
+                                "x": 4.2037,
+                                "y": 2.0701
+                            },
+                            "uuid": "23bba25e-cf9e-4c34-b499-a69e92a5d658"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.0127 mm",
+                            "pos": {
+                                "x": 4.2037,
+                                "y": 2.1209
+                            },
+                            "uuid": "2b02e552-d4c6-4581-970a-5bedfc96582c"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "Wires not connected to anything",
+                    "items": [
+                        {
+                            "description": "Horizontal Wire, length 0.1016 mm",
+                            "pos": {
+                                "x": 4.3434,
+                                "y": 3.4544
+                            },
+                            "uuid": "314e8212-9086-4a1b-bbbd-49abedacc4df"
+                        },
+                        {
+                            "description": "Horizontal Wire, length 0.0508 mm",
+                            "pos": {
+                                "x": 4.2926,
+                                "y": 3.5179
+                            },
+                            "uuid": "bf449b8b-c18a-4bec-bc12-a199c0bde153"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "wire_dangling"
+                },
+                {
+                    "description": "The current configuration does not include the footprint library 'PCM_SparkFun-Switch'",
+                    "items": [
+                        {
+                            "description": "Symbol SW1 [SPST_Push_SMD_4.2x3.2mm_h2.5mm]",
+                            "pos": {
+                                "x": 0.5969,
+                                "y": 1.6764
+                            },
+                            "uuid": "defdf20e-2986-4151-b9fb-41c59a4cfabf"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_link_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SparkFun-Switch' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_sparkfun_SparkFun-KiCad-Libraries/SparkFun-Switch.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol SW1 [SPST_Push_SMD_4.2x3.2mm_h2.5mm]",
+                            "pos": {
+                                "x": 0.5969,
+                                "y": 1.6764
+                            },
+                            "uuid": "defdf20e-2986-4151-b9fb-41c59a4cfabf"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The current configuration does not include the footprint library 'PCM_SparkFun-Switch'",
+                    "items": [
+                        {
+                            "description": "Symbol SW2 [SPST_Push_SMD_4.2x3.2mm_h2.5mm]",
+                            "pos": {
+                                "x": 0.5969,
+                                "y": 1.7018
+                            },
+                            "uuid": "6e6cf18c-0c72-4f2d-aa36-8cb01b9355f8"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_link_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SparkFun-Switch' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_sparkfun_SparkFun-KiCad-Libraries/SparkFun-Switch.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol SW2 [SPST_Push_SMD_4.2x3.2mm_h2.5mm]",
+                            "pos": {
+                                "x": 0.5969,
+                                "y": 1.7018
+                            },
+                            "uuid": "6e6cf18c-0c72-4f2d-aa36-8cb01b9355f8"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SparkFun-LED' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_sparkfun_SparkFun-KiCad-Libraries/SparkFun-LED.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol D4 [LED_Blue_0603]",
+                            "pos": {
+                                "x": 0.6858,
+                                "y": 2.1082
+                            },
+                            "uuid": "8db0cba0-cdce-48a8-92b2-b4a03766e4e0"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "A pin with a \"no connection\" flag is connected",
+                    "items": [
+                        {
+                            "description": "Symbol 3v3/2 Pin 1 [1, Passive, Line]",
+                            "pos": {
+                                "x": 3.0734,
+                                "y": 2.8321
+                            },
+                            "uuid": "fbd2163c-5830-4b43-87bd-78ade613d821"
+                        },
+                        {
+                            "description": "No Connect",
+                            "pos": {
+                                "x": 3.0734,
+                                "y": 2.8321
+                            },
+                            "uuid": "3487b2b6-ba80-4f50-82b4-9a12d623d097"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "no_connect_connected"
+                },
+                {
+                    "description": "The symbol library 'PCM_SL_Pin_Headers' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_Sajitha-Aldeniya_KiCad-Simple-Libraries/SL_Pin_Headers.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol J7 [PINHD_1x3_Male]",
+                            "pos": {
+                                "x": 4.1656,
+                                "y": 2.3114
+                            },
+                            "uuid": "11e2cdcc-890d-40b6-a2e8-2c20e4474821"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SL_Pin_Headers' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_Sajitha-Aldeniya_KiCad-Simple-Libraries/SL_Pin_Headers.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol J8 [PINHD_1x3_Male]",
+                            "pos": {
+                                "x": 4.1656,
+                                "y": 2.4257
+                            },
+                            "uuid": "741e648b-10a7-4a17-a6cc-d22e1ecb1d0e"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SL_Pin_Headers' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_Sajitha-Aldeniya_KiCad-Simple-Libraries/SL_Pin_Headers.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol J9 [PINHD_1x3_Male]",
+                            "pos": {
+                                "x": 4.1656,
+                                "y": 2.54
+                            },
+                            "uuid": "33c7e6aa-4667-481d-bffd-818a1bb6edf8"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SL_Pin_Headers' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_Sajitha-Aldeniya_KiCad-Simple-Libraries/SL_Pin_Headers.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol J4 [PINHD_1x3_Male]",
+                            "pos": {
+                                "x": 4.3307,
+                                "y": 1.8161
+                            },
+                            "uuid": "bf242f3e-16af-4906-bdf0-55129e45f55c"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SL_Pin_Headers' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_Sajitha-Aldeniya_KiCad-Simple-Libraries/SL_Pin_Headers.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol J5 [PINHD_1x3_Male]",
+                            "pos": {
+                                "x": 4.3307,
+                                "y": 1.9304
+                            },
+                            "uuid": "bd5d427f-aa41-4eb3-ac66-c3756b43dc5f"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SL_Pin_Headers' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_Sajitha-Aldeniya_KiCad-Simple-Libraries/SL_Pin_Headers.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol J6 [PINHD_1x3_Male]",
+                            "pos": {
+                                "x": 4.3307,
+                                "y": 2.0574
+                            },
+                            "uuid": "cbc6f067-1012-47bc-ac0f-4f74a97b60d6"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                },
+                {
+                    "description": "The symbol library 'PCM_SparkFun-Connector' was not found at '/Users/cole/Documents/KiCad/10.0/3rdparty//symbols/com_github_sparkfun_SparkFun-KiCad-Libraries/SparkFun-Connector.kicad_sym'",
+                    "items": [
+                        {
+                            "description": "Symbol J11 [Qwiic_Vertical]",
+                            "pos": {
+                                "x": 4.3561,
+                                "y": 3.1242
+                            },
+                            "uuid": "dc688b53-38fb-4c62-93d1-6617023dd698"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "lib_symbol_issues"
+                }
+            ]
+        }
+    ],
+    "source": "Esp32 Can+IMU.kicad_sch"
+}

@@ -1,0 +1,14 @@
+# Target labels
+ picotoolBuild
+# Source files and their labels
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/CMakeFiles/picotoolBuild
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/CMakeFiles/picotoolBuild.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/CMakeFiles/picotoolBuild-complete.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-build.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-configure.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-download.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-install.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-mkdir.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-patch.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-test.rule
+/Users/cole/Desktop/Esp32 Can+IMU/pico_uart_bridge/pico_sdk/build/pico-sdk/src/rp2350/boot_stage2/picotool/src/picotoolBuild-stamp/picotoolBuild-update.rule
