@@ -9,7 +9,7 @@
 %   RIGID ASSEMBLY  (M_plate = motor + plate + external blocks)
 %       │              external blocks = beam end pinned supports
 %       │
-%     BEAM          BEAM    ← bistable curved beams (Qiu cosine profile)
+%     BEAM PACK          ← parallel bistable curved beams (Qiu cosine profile)
 %       └──────┬────────┘
 %              │
 %           HOOK  (m_hook = reference mass at beam apex)
@@ -45,7 +45,7 @@ t_beam  = 0.6e-3;   % [m]  Beam thickness (out-of-plane is b_beam)
 l_span  = 42e-3;    % [m]  Beam span (hinge-to-hinge)
 h_apex  = 3.5e-3;   % [m]  Apex height  (modest increase from 2.5mm — avoids f_rel leaving sweep)
 b_beam_scale = 1.5; % [-]  Width multiplier vs original Design 9
-%   Q = h_apex/t_beam must be > 2.31 for bistability
+%   Q = h_apex/t_beam must be >= 2.35 for bistability
 
 %% ── Bistable calibration — ANALYTICAL (Qiu 2003 energy model) ───────
 % Back-calculate original beam width b from Design 9 paper value.
@@ -66,17 +66,18 @@ b_beam      = b_beam * b_beam_scale;           % [m]  scaled width
 
 % Compute F_push_1cell for current geometry
 Q_beam      = h_apex / t_beam;
-assert(Q_beam > 2.31, 'Q = %.3f < 2.31 — increase h_apex or reduce t_beam', Q_beam);
+Q_min       = 2.35;
+assert(Q_beam >= Q_min, 'Q = %.3f < %.2f — increase h_apex or reduce t_beam', Q_beam, Q_min);
 I_beam      = b_beam * t_beam^3 / 12;
 F_push_1cell = E_beam * I_beam * pi^4 * h_apex / l_span^3 ...
                * (Q_beam^2 - 1/3) * sqrt(3*Q_beam^2-1) / (3*Q_beam);
 
-% Stroke: from Qiu model, snap-through occurs at d̄_push = 1 - sqrt(3Q²-1)/(3Q)
-% Full stroke (State 1 → State 2) ≈ h_apex for symmetric arch (State 2 at -h)
-% Use the d/h ≈ 2.2 ratio observed in Design 9 (accounts for clamped BCs)
-d_stroke_1cell = h_apex * 2.2;  % [m]  scales with apex height
-d_saddle_frac  = 0.545;    % [-]   Saddle fraction of stroke
-n_cells        = 5;        % [-]   Cells in series
+% Use the d/h ≈ 2.2 ratio observed in Design 9 (accounts for clamped BCs).
+% In the robot layout the beams act in parallel: displacement stays at the
+% single-beam stroke, while force and stiffness scale with beam count.
+d_stroke_1cell = h_apex * 2.2;  % [m]  single-beam stroke
+d_saddle_frac  = 0.545;         % [-]  saddle fraction of stroke
+n_cells        = 5;             % [-]  parallel beam count
 
 %% ── Hook (reference mass at beam apex) ──────────────────────────────
 m_hook     = 0.200;   % [kg]  Hook = reference mass
@@ -101,13 +102,13 @@ lever_arm    = 0.050;   % [m]   Motor shaft-to-plate contact
 t_end_c2 = 20.0;   % [s]  Max sim duration
 
 %% ── Sweep parameters ─────────────────────────────────────────────────
-f_sweep_1d  = linspace(8, 150, 50);   % [Hz]  1-D frequency sweep for §4.12
+f_sweep_1d  = linspace(20, 650, 50);  % [Hz]  1-D frequency sweep for §4.12
 t_end_sweep = 2.0;                    % [s]   ODE time limit in sweep
 
-n_cells_vec = 3:2:11;                 % [3 5 7 9 11]  discrete beam count sweep
+n_cells_vec = 3:2:11;                 % [3 5 7 9 11]  parallel beam count sweep
 
 % 3-D grid parameters
-f_grid_vec     = linspace(8, 150, 18);     % [Hz]  frequency axis
+f_grid_vec     = linspace(20, 650, 18);    % [Hz]  frequency axis
 mhook_grid_vec = linspace(0.020, 0.250, 14);  % [kg]  hook mass axis
 
 ANIMATE      = true;
@@ -116,12 +117,13 @@ DISPLAY_FIGS = false;
 %% ══════════════════════════════════════════════════════════════════════
 %%  DERIVED BISTABLE QUANTITIES
 %% ══════════════════════════════════════════════════════════════════════
-d_stroke = n_cells * d_stroke_1cell;
+d_stroke = d_stroke_1cell;
 d_saddle = d_saddle_frac * d_stroke;
 d_push   = 0.27 * d_stroke;
+F_push_total = n_cells * F_push_1cell;
 
 denom    = d_push * (d_push - d_saddle) * (d_push - d_stroke);
-A_coeff  = F_push_1cell / denom;
+A_coeff  = F_push_total / denom;
 
 F_restore = @(x) -A_coeff .* x .* (x - d_saddle) .* (x - d_stroke);
 ds_v = d_saddle; df_v = d_stroke;
@@ -147,10 +149,11 @@ fprintf('\n═══════════════════════
 fprintf('   Beam Geometry (Qiu 2003 analytical model)\n');
 fprintf('══════════════════════════════════════════════════════════════\n');
 fprintf('  Back-calculated beam width  b = %.2f mm  (%.1f× original)\n', b_beam*1e3, b_beam_scale);
-fprintf('  Q = h/t = %.2f  (bistability threshold 2.31 ✓)\n', Q_beam);
+fprintf('  Q = h/t = %.2f  (bistability threshold %.2f ✓)\n', Q_beam, Q_min);
 fprintf('  F_push_1cell (analytical) = %.2f N\n', F_push_1cell);
+fprintf('  F_push total (N=%d parallel) = %.2f N\n', n_cells, F_push_total);
 fprintf('  d_stroke_1cell            = %.2f mm\n', d_stroke_1cell*1e3);
-fprintf('  d_stroke total (N=%d)     = %.1f mm\n', n_cells, n_cells*d_stroke_1cell*1e3);
+fprintf('  d_stroke mechanism        = %.2f mm  (parallel beams do not add stroke)\n', d_stroke*1e3);
 fprintf('══════════════════════════════════════════════════════════════\n');
 fprintf('\n══════════════════════════════════════════════════════════════\n');
 fprintf('   Mass Actuation Force Optimisation — Parameters\n');
@@ -237,10 +240,10 @@ x_rel_p = y_pm(:,3);  v_rel_p = y_pm(:,4);
 fprintf('Running Config 2 at f_n1 = %.2f Hz …\n', f_n1);
 % Analytical minimum plate amplitude: x_rel_ss = A/(2*zeta_h) >= d_saddle
 A_min_c2 = 2 * zeta_hook * d_saddle;
-tau_c2   = m_hook * A_min_c2 * omega_n1^2 * lever_arm;
+tau_c2_analytic = m_hook * A_min_c2 * omega_n1^2 * lever_arm;
 vpeak_c2 = (A_min_c2/lever_arm) * omega_n1;
 fprintf('  A_min = %.3f mm | τ = %.4f N·m (%.1f%% rated) | v_peak = %.2f rad/s\n', ...
-        A_min_c2*1e3, tau_c2, tau_c2/1.6*100, vpeak_c2);
+        A_min_c2*1e3, tau_c2_analytic, tau_c2_analytic/1.6*100, vpeak_c2);
 
 % Binary search to confirm numerical minimum
 A_lo=0; A_hi=d_saddle*3;
@@ -251,8 +254,11 @@ for bs=1:20
     if isempty(ts), A_lo=A_try; else, A_hi=A_try; end
 end
 A_min_c2_num = A_hi;
+tau_c2_num   = m_hook * A_min_c2_num * omega_n1^2 * lever_arm;
 fprintf('  Numerical A_min = %.3f mm  (analytical = %.3f mm)\n', ...
         A_min_c2_num*1e3, A_min_c2*1e3);
+fprintf('  Numerical torque = %.4f N·m  (%.1f%% rated)\n', ...
+        tau_c2_num, tau_c2_num/1.6*100);
 
 ode_c2 = @(t,y) excit_prescribed_ode(t,y,m_hook,c_hook,F_restore,A_min_c2_num,omega_n1);
 [t1c,y1c,t_snap_c,y_snap_c,~] = ode45(ode_c2,[0,t_end_c2],[0;0],opts_snap2);
@@ -367,7 +373,7 @@ for nci = 1:Nnc
         H_i      = m_hook*omega_i^2 / denom_tf;
         tau_c2_nc(nci,fi) = m_hook*(B.d_saddle/H_i)*omega_i^2*lever_arm;
     end
-    fprintf('  n_cells=%d: f_n1=%.1f Hz  f_rel=%.1f Hz  KE=%.2f mJ  stroke=%.1f mm\n', ...
+    fprintf('  N_parallel=%d: f_n1=%.1f Hz  f_rel=%.1f Hz  KE=%.2f mJ  stroke=%.1f mm\n', ...
             nc_i, B.f_n1, B.f_rel, DeltaE2_nc(nci)*1e3, B.d_stroke*1e3);
 end
 
@@ -443,7 +449,7 @@ for nci = 1:Nnc
     B_i  = bistable_params(nc_i, d_stroke_1cell, d_saddle_frac, F_push_1cell, m_hook, zeta_hook);
     [Mopt_i, iopt_i] = min(M_pm_min_nc(nci,:));
     plot(f_sweep_1d, M_pm_min_nc(nci,:), '-', 'Color', nc_colors(nci,:), 'LineWidth', 2.0, ...
-         'DisplayName', sprintf('n=%d  (f_{n1}=%.1f Hz)', nc_i, B_i.f_n1));
+         'DisplayName', sprintf('N=%d  (f_{n1}=%.1f Hz)', nc_i, B_i.f_n1));
     plot(f_sweep_1d(iopt_i), Mopt_i, '*', 'Color', nc_colors(nci,:), 'MarkerSize', 10, 'LineWidth', 2, ...
          'HandleVisibility','off');
 end
@@ -453,7 +459,7 @@ plot(f_sweep_1d, M_pm_min_1d*1e3,'w-','LineWidth',3.5,'HandleVisibility','off');
 plot(f_sweep_1d, M_pm_min_1d*1e3,'-','Color',nc_colors(nc_cur_idx,:),'LineWidth',2.5,'HandleVisibility','off');
 xline(f_n1,'k--','LineWidth',1.2,'Label',sprintf('f_{n1}=%.1f Hz',f_n1),'FontSize',8,'HandleVisibility','off');
 xlabel('Drive frequency (Hz)','FontSize',9); ylabel('Min proof mass M_{pm}  (g)','FontSize',9);
-title('M_{pm,min} vs Frequency — per Beam Count','FontWeight','bold');
+title('M_{pm,min} vs Frequency — Parallel Beam Count','FontWeight','bold');
 legend('Location','northeast','FontSize',7); grid on; box on;
 
 subplot(2,3,5); hold on;   % time history
@@ -532,7 +538,7 @@ title('Potential Energy Double Well','FontWeight','bold');
 legend('Location','northeast','FontSize',8); grid on; box on;
 
 % Panel 4: torque vs frequency (analytical)
-f_tau_vec = linspace(10,100,300);
+f_tau_vec = linspace(20,350,350);
 omega_tau  = 2*pi*f_tau_vec;
 c_hook_tau = 2*zeta_hook*m_hook*omega_n1;
 denom_tau  = sqrt((k_eff_s1 - m_hook.*omega_tau.^2).^2 + (c_hook_tau.*omega_tau).^2);
@@ -544,10 +550,10 @@ semilogy(f_tau_vec, tau_curve,'b-','LineWidth',2.5,'DisplayName','Required torqu
 yline(1.6,'r--','LineWidth',1.8,'Label','RS05 rated 1.6 N·m','LabelHorizontalAlignment','right','FontSize',8,'DisplayName','RS05 rated');
 yline(5.5,'m--','LineWidth',1.2,'Label','RS05 peak 5.5 N·m','LabelHorizontalAlignment','right','FontSize',8,'DisplayName','RS05 peak');
 xline(f_n1,'k--','LineWidth',1.2,'Label',sprintf('f_{n1}=%.1f Hz',f_n1),'FontSize',8,'HandleVisibility','off');
-plot(f_n1, tau_c2,'r*','MarkerSize',14,'LineWidth',2.5,'DisplayName',sprintf('Config 2: τ=%.3f N·m',tau_c2));
+plot(f_n1, tau_c2_num,'r*','MarkerSize',14,'LineWidth',2.5,'DisplayName',sprintf('Config 2 sim: τ=%.3f N·m',tau_c2_num));
 xlabel('Drive frequency (Hz)','FontSize',9); ylabel('Required torque (N·m)','FontSize',9);
 title('Config 2: Torque vs Frequency','FontWeight','bold');
-legend('Location','northwest','FontSize',8); grid on; box on; xlim([10,100]);
+legend('Location','northwest','FontSize',8); grid on; box on; xlim([20,350]);
 
 subplot(2,3,5); hold on;   % time history
 if ~isnan(t_snap_c)
@@ -579,8 +585,8 @@ title('Phase Portrait','FontWeight','bold');
 legend('Location','northeast','FontSize',7); grid on; box on;
 v_rng2=max(abs(v_rel_c2))*1.2e3; v_rng2=max(v_rng2,max(v_sep)*1e3*.2); ylim(ax2_6,[-v_rng2,v_rng2]);
 
-sgtitle(sprintf('Config 2 — Prescribed Base Motion  |  f_{n1}=%.1f Hz  |  A_{min}=%.2f mm  |  τ=%.4f N·m', ...
-        f_n1, A_min_c2_num*1e3, tau_c2),'FontSize',11,'FontWeight','bold');
+sgtitle(sprintf('Config 2 — Prescribed Base Motion  |  f_{n1}=%.1f Hz  |  A_{min,num}=%.2f mm  |  τ_{num}=%.4f N·m', ...
+        f_n1, A_min_c2_num*1e3, tau_c2_num),'FontSize',11,'FontWeight','bold');
 
 %% ── Figure 3: 3-D M_pm_min surface ──────────────────────────────────
 fig3 = figure('Name','3-D M_{pm,min}(f_{drive}, m_{hook})','NumberTitle','off', ...
@@ -631,50 +637,50 @@ shading interp; lighting gouraud; view(45,30);
 legend('Location','northeast','FontSize',10);
 grid on; box on;
 
-%% ── Figure 5: 3-D M_pm_min(f_drive, n_cells) ────────────────────────
-fig5 = figure('Name','3-D M_{pm,min}(f_{drive}, n_{cells})','NumberTitle','off', ...
+%% ── Figure 5: 3-D M_pm_min(f_drive, N_parallel) ─────────────────────
+fig5 = figure('Name','3-D M_{pm,min}(f_{drive}, N_{parallel})','NumberTitle','off', ...
               'Color','w','Position',[180 120 900 680]);
 ax5  = axes;
 [F5grid, N5grid] = meshgrid(f_sweep_1d, n_cells_vec);
 surf(F5grid, N5grid, M_pm_min_nc,'EdgeColor','none','FaceAlpha',.85); hold on;
-% Resonance ridge: f_rel(n_cells)
+% Resonance ridge: f_rel(N_parallel)
 Z5_frel = zeros(1,Nnc);
 for nci=1:Nnc, [~,fi_r]=min(abs(f_sweep_1d-frel_nc(nci))); Z5_frel(nci)=M_pm_min_nc(nci,fi_r); end
-plot3(frel_nc, n_cells_vec, Z5_frel+0.5,'w-','LineWidth',3,'DisplayName','f_{rel}(n_{cells}) ridge');
+plot3(frel_nc, n_cells_vec, Z5_frel+0.5,'w-','LineWidth',3,'DisplayName','f_{rel}(N_{parallel}) ridge');
 % Current design point
 [~,nc_now]=min(abs(n_cells_vec-n_cells)); [~,fi_now]=min(abs(f_sweep_1d-f_opt));
 plot3(f_opt, n_cells, M_pm_min_nc(nc_now,fi_now)+1,'r*','MarkerSize',16,'LineWidth',2.5,'DisplayName','Current design');
 xlabel('Drive frequency  (Hz)','FontSize',12);
-ylabel('Number of cells  n_{cells}','FontSize',12);
+ylabel('Parallel beam count  N','FontSize',12);
 zlabel('Min proof mass  M_{pm,min}  (g)','FontSize',12);
-title('§4.12: Min Proof Mass vs Frequency & Beam Count','FontWeight','bold','FontSize',13);
+title('§4.12: Min Proof Mass vs Frequency & Parallel Beam Count','FontWeight','bold','FontSize',13);
 colormap(ax5,parula); cb5=colorbar; cb5.Label.String='M_{pm,min}  (g)'; cb5.FontSize=10;
 shading interp; view(45,30); legend('Location','northeast','FontSize',10);
 grid on; box on; set(gca,'YTick',n_cells_vec);
 
-%% ── Figure 6: 3-D Torque(f_drive, n_cells) — Config 2 (analytical) ──
-fig6 = figure('Name','3-D Torque(f_{drive}, n_{cells}) — Config 2','NumberTitle','off', ...
+%% ── Figure 6: 3-D Torque(f_drive, N_parallel) — Config 2 (analytical) ─
+fig6 = figure('Name','3-D Torque(f_{drive}, N_{parallel}) — Config 2','NumberTitle','off', ...
               'Color','w','Position',[200 140 900 680]);
 ax6  = axes;
 tau_plot6 = min(tau_c2_nc, 20);   % cap for display
 surf(F5grid, N5grid, tau_plot6,'EdgeColor','none','FaceAlpha',.85); hold on;
-% Resonance valley: f_n1(n_cells)
+% Resonance valley: f_n1(N_parallel)
 Z6_fn1 = zeros(1,Nnc);
 for nci=1:Nnc, [~,fi_n]=min(abs(f_sweep_1d-fn1_nc(nci))); Z6_fn1(nci)=tau_c2_nc(nci,fi_n); end
-plot3(fn1_nc, n_cells_vec, Z6_fn1+0.02,'w-','LineWidth',3,'DisplayName','f_{n1}(n_{cells}) valley');
+plot3(fn1_nc, n_cells_vec, Z6_fn1+0.02,'w-','LineWidth',3,'DisplayName','f_{n1}(N_{parallel}) valley');
 [F6g,N6g]=meshgrid(f_sweep_1d,n_cells_vec);
 surf(F6g,N6g,1.6*ones(size(F6g)),'FaceAlpha',.12,'EdgeColor','none','FaceColor','r','DisplayName','RS05 rated 1.6 N·m');
 [~,nc_now6]=min(abs(n_cells_vec-n_cells)); [~,fi_n1]=min(abs(f_sweep_1d-fn1_nc(nc_now6)));
 plot3(fn1_nc(nc_now6),n_cells,tau_c2_nc(nc_now6,fi_n1)+0.05,'r*','MarkerSize',16,'LineWidth',2.5,'DisplayName','Current design');
 xlabel('Drive frequency  (Hz)','FontSize',12);
-ylabel('Number of cells  n_{cells}','FontSize',12);
+ylabel('Parallel beam count  N','FontSize',12);
 zlabel('Required torque  (N·m)','FontSize',12);
-title('Config 2: Motor Torque vs Frequency & Beam Count','FontWeight','bold','FontSize',13);
+title('Config 2: Motor Torque vs Frequency & Parallel Beam Count','FontWeight','bold','FontSize',13);
 colormap(ax6,parula); cb6=colorbar; cb6.Label.String='Torque  (N·m)'; cb6.FontSize=10;
 shading interp; view(45,30); legend('Location','northeast','FontSize',10);
 grid on; box on; set(gca,'YTick',n_cells_vec);
 
-%% ── Figure 7: Comprehensive design optimisation vs n_cells ──────────
+%% ── Figure 7: Comprehensive design optimisation vs N_parallel ───────
 % Precompute per-n_cells derived quantities
 [Mpm_opt_nc, idx_opt_nc] = min(M_pm_min_nc, [], 2);
 f_opt_nc        = f_sweep_1d(idx_opt_nc);
@@ -691,12 +697,12 @@ for nci = 1:Nnc
     d_stroke_nc(nci)   = B_tmp.d_stroke * 1e3;   % mm
 end
 
-fig7 = figure('Name','Comprehensive Design Space vs n_{cells}','NumberTitle','off', ...
+fig7 = figure('Name','Comprehensive Design Space vs N_{parallel}','NumberTitle','off', ...
               'Color','w','Position',[220 160 1200 800]);
 
 nc_col = lines(Nnc);
 
-%% Panel 1: Impact kinetic energy (benefit)
+%% Panel 1: released spring energy
 subplot(2,2,1); hold on;
 b1 = bar(n_cells_vec, KE_impact_nc*1e3, 0.5, 'FaceAlpha', 0.8);
 b1.CData = nc_col;  b1.FaceColor = 'flat';
@@ -705,8 +711,8 @@ for nci=1:Nnc
          sprintf('%.1f mm', d_stroke_nc(nci)), ...
          'HorizontalAlignment','center','FontSize',8,'FontWeight','bold');
 end
-xlabel('n_{cells}','FontSize',10); ylabel('Impact KE  (mJ)','FontSize',10);
-title('Impact Energy at Min-Snap  (\DeltaE_2)','FontWeight','bold');
+xlabel('N_{parallel}','FontSize',10); ylabel('Released energy \DeltaE_2  (mJ)','FontSize',10);
+title('Stored Energy Released After Snap','FontWeight','bold');
 xticks(n_cells_vec); grid on; box on;
 
 %% Panel 2: Actuator requirements — §4.12 proof mass
@@ -721,18 +727,18 @@ yline(1.6,'b--','LineWidth',1.2,'Label','Rated 1.6 N·m','LabelHorizontalAlignme
 yline(5.5,'b:','LineWidth',1.2,'Label','Peak 5.5 N·m','LabelHorizontalAlignment','right','FontSize',8);
 ylabel('Motor torque  (N·m)','FontSize',10,'Color','b');
 ax72.YAxis(2).Color = 'b';
-xlabel('n_{cells}','FontSize',10);
-title('§4.12 Proof Mass: M_{pm,min} & Torque vs n_{cells}','FontWeight','bold');
+xlabel('N_{parallel}','FontSize',10);
+title('§4.12 Proof Mass: M_{pm,min} & Torque vs N','FontWeight','bold');
 xticks(n_cells_vec); grid on; box on;
 
-%% Panel 3: Key frequencies vs n_cells
+%% Panel 3: Key frequencies vs parallel beam count
 subplot(2,2,3); hold on;
 plot(n_cells_vec, fn1_nc,  'b-s','LineWidth',2.2,'MarkerSize',9,'MarkerFaceColor','b',  'DisplayName','f_{n1} (bistable resonance)');
 plot(n_cells_vec, frel_nc, 'm-^','LineWidth',2.2,'MarkerSize',9,'MarkerFaceColor','m',  'DisplayName','f_{rel} (coupled resonance)');
 plot(n_cells_vec, f_opt_nc,'r-o','LineWidth',2.2,'MarkerSize',9,'MarkerFaceColor','r',  'DisplayName','f_{opt} §4.12 (min M_{pm})');
 yline(f_max_rotation,'k--','LineWidth',1.5,'Label',sprintf('RS05 rot. limit %.0f Hz',f_max_rotation),'LabelHorizontalAlignment','right','FontSize',8,'HandleVisibility','off');
-xlabel('n_{cells}','FontSize',10); ylabel('Frequency  (Hz)','FontSize',10);
-title('Key Frequencies vs n_{cells}','FontWeight','bold');
+xlabel('N_{parallel}','FontSize',10); ylabel('Frequency  (Hz)','FontSize',10);
+title('Key Frequencies vs N','FontWeight','bold');
 xticks(n_cells_vec); legend('Location','northeast','FontSize',9); grid on; box on;
 
 %% Panel 4: Torque comparison — §4.12 vs Config 2
@@ -743,11 +749,11 @@ yline(1.6,'r--','LineWidth',1.8,'Label','RS05 rated 1.6 N·m','LabelHorizontalAl
 yline(5.5,'m--','LineWidth',1.2,'Label','RS05 peak 5.5 N·m', 'LabelHorizontalAlignment','right','FontSize',8,'HandleVisibility','off');
 fill([n_cells_vec(1)-0.5, n_cells_vec(end)+0.5, n_cells_vec(end)+0.5, n_cells_vec(1)-0.5], ...
      [0, 0, 1.6, 1.6],[0 0.8 0],'FaceAlpha',0.08,'EdgeColor','none','HandleVisibility','off');
-xlabel('n_{cells}','FontSize',10); ylabel('Required torque  (N·m)','FontSize',10);
+xlabel('N_{parallel}','FontSize',10); ylabel('Required torque  (N·m)','FontSize',10);
 title('Motor Torque Required: §4.12 vs Config 2','FontWeight','bold');
 xticks(n_cells_vec); legend('Location','northwest','FontSize',9); grid on; box on;
 
-sgtitle(sprintf('Comprehensive Design Space  |  m_{hook}=%.0fg  |  d_{cell}=%.2fmm  |  \\zeta_h=%.2f', ...
+sgtitle(sprintf('Comprehensive Design Space vs N_{parallel}  |  m_{hook}=%.0fg  |  d_{beam}=%.2fmm  |  \\zeta_h=%.2f', ...
         m_hook*1e3, d_stroke_1cell*1e3, zeta_hook), 'FontSize',12,'FontWeight','bold');
 
 %% ══════════════════════════════════════════════════════════════════════
@@ -792,11 +798,13 @@ function B = bistable_params(n_cells, d_stroke_1cell, d_saddle_frac, F_push_1cel
 %BISTABLE_PARAMS  Recompute all bistable quantities for a given n_cells.
 %  Returns struct B with fields: d_stroke, d_saddle, k_eff_s1, k_eff_s2,
 %  omega_n1, f_n1, omega_n2, f_n2, f_rel, c_hook, F_restore, V_fun, DeltaE2.
-    B.d_stroke   = n_cells * d_stroke_1cell;
+    M_plate_default = 0.045;
+    B.d_stroke   = d_stroke_1cell;
     B.d_saddle   = d_saddle_frac * B.d_stroke;
+    B.F_push     = n_cells * F_push_1cell;
     d_push       = 0.27 * B.d_stroke;
     denom        = d_push * (d_push - B.d_saddle) * (d_push - B.d_stroke);
-    B.A_coeff    = F_push_1cell / denom;
+    B.A_coeff    = B.F_push / denom;
     ds           = B.d_saddle;  df = B.d_stroke;
     B.F_restore  = @(x) -B.A_coeff .* x .* (x - ds) .* (x - df);
     B.V_fun      = @(x) B.A_coeff .* (x.^4/4 - (ds+df)*x.^3/3 + ds*df*x.^2/2);
@@ -807,12 +815,9 @@ function B = bistable_params(n_cells, d_stroke_1cell, d_saddle_frac, F_push_1cel
     B.omega_n2   = sqrt(B.k_eff_s2 / m_hook);
     B.f_n2       = B.omega_n2 / (2*pi);
     B.c_hook     = 2 * zeta_hook * m_hook * B.omega_n1;
-    % Coupled relative-mode frequency (base excitation resonance)
-    % M_red fixed by M_plate—but M_plate not passed; approximate with m_hook only
-    % (caller can override if needed)
     B.DeltaE2    = B.V_fun(B.d_saddle) - B.V_fun(B.d_stroke);
-    % f_rel requires M_plate; stored as placeholder (caller must recompute if M_plate changes)
-    B.f_rel      = B.f_n1 * sqrt(1 + m_hook/0.200);   % using default M_plate=0.200
+    M_red        = m_hook * M_plate_default / (m_hook + M_plate_default);
+    B.f_rel      = sqrt(B.k_eff_s1 / M_red) / (2*pi);
 end
 
 function [val,isterm,dir] = snap_event_base(~,y,d_saddle)

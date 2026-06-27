@@ -4,7 +4,8 @@
 % Finds:
 %   1. omega_opt — frequency maximizing pre-snap displacement amplitude in State 1
 %   2. F0_min(omega) — minimum excitation amplitude for snap-through at each frequency
-%   3. Sensitivity sweep — how snap threshold changes with h_apex, t_beam, n_cells
+%   3. Sensitivity sweep — how snap threshold changes with h_apex, t_beam,
+%      and parallel beam count n_cells
 %
 % Usage:
 %   [omega_opt, F0_min_curve, sweep] = optimize_displacement_sim2(params)
@@ -15,12 +16,12 @@ function [omega_opt, F0_min_curve, sweep] = optimize_displacement_sim2(params)
 
 if nargin == 0
     %% ── Default parameters (match bistable_curved_beam.m Design 9) ──────
-    params.F_push_1cell    = 12.55;    % [N]
-    params.d_stroke_1cell  = 5.5e-3;   % [m]
+    params.F_push_1cell    = 52.40;    % [N] current 3.5 mm beam analytical value
+    params.d_stroke_1cell  = 7.7e-3;   % [m] single-beam stroke
     params.d_saddle_frac   = 0.545;    % [-]
-    params.n_cells         = 5;        % [-]
-    params.m_hook          = 0.010;    % [kg]
-    params.zeta_hook       = 0.05;     % [-]
+    params.n_cells         = 5;        % [-] parallel beam count
+    params.m_hook          = 0.200;    % [kg]
+    params.zeta_hook       = 0.02;     % [-]
     params.t_end           = 25.0;     % [s]  search window
     params.F0_lo           = 0.01;     % [N]
     params.F0_hi           = 10.0;     % [N]
@@ -141,7 +142,7 @@ sweep.h_apex  = struct();
 sweep.t_beam  = struct();
 sweep.n_cells = struct();
 
-% vary h_apex (keep t_beam = 0.6mm, n_cells = 5)
+% vary h_apex (keep t_beam = 0.6mm, n_cells = 5 parallel beams)
 p2 = params;
 p2.t_beam_val  = 0.6e-3;
 p2.n_cells     = params.n_cells;
@@ -156,15 +157,15 @@ for i = 1:numel(hv)
         params.d_stroke_1cell, params.d_saddle_frac, params.n_cells, ...
         hv(i), 0.6e-3);
     sweep.h_apex.f_n1(i) = sqrt(k1s/params.m_hook)/(2*pi);
-    sweep.h_apex.F0_min(i) = params.F_push_1cell;  % push force doesn't change with h
+    sweep.h_apex.F0_min(i) = params.n_cells * params.F_push_1cell;
 end
 
-% vary t_beam (keep h_apex = 2.5mm, n_cells = 5)
+% vary t_beam (keep h_apex = 2.5mm, n_cells = 5 parallel beams)
 tv = params.t_beam_range;
 sweep.t_beam.vals   = tv;
 sweep.t_beam.Q      = 2.5e-3 ./ tv;
 sweep.t_beam.f_n1   = NaN(size(tv));
-sweep.t_beam.bistable = tv < 2.5e-3 / 2.31;   % Q > 2.31 condition
+    sweep.t_beam.bistable = tv <= 2.5e-3 / 2.35;   % Q >= 2.35 condition
 for i = 1:numel(tv)
     [~,~,~,~,k1s,~,~] = build_force_model_raw(params.F_push_1cell, ...
         params.d_stroke_1cell, params.d_saddle_frac, params.n_cells, ...
@@ -172,7 +173,7 @@ for i = 1:numel(tv)
     sweep.t_beam.f_n1(i) = sqrt(k1s/params.m_hook)/(2*pi);
 end
 
-% vary n_cells (keep h_apex=2.5mm, t_beam=0.6mm)
+% vary parallel beam count (keep h_apex=2.5mm, t_beam=0.6mm)
 nv = params.n_cells_range;
 sweep.n_cells.vals  = nv;
 sweep.n_cells.f_n1  = NaN(size(nv));
@@ -253,10 +254,10 @@ plot(sw.n_cells.vals, sw.n_cells.f_n1,'b-o','LineWidth',2,'MarkerSize',7,...
 ylabel('f_{n1}  (Hz)','FontSize',10);
 yyaxis right
 plot(sw.n_cells.vals, sw.n_cells.stroke,'r-s','LineWidth',2,'MarkerSize',7,...
-     'DisplayName','Total stroke  (mm)');
-ylabel('Total stroke  (mm)','FontSize',10);
-xlabel('Number of stacked cells','FontSize',10);
-title('Sensitivity: Number of Cells','FontWeight','bold');
+     'DisplayName','Mechanism stroke  (mm)');
+ylabel('Mechanism stroke  (mm)','FontSize',10);
+xlabel('Parallel beam count','FontSize',10);
+title('Sensitivity: Parallel Beam Count','FontWeight','bold');
 legend('Location','northeast','FontSize',8);
 grid on; box on;
 
@@ -266,7 +267,7 @@ Q_vals = sw.h_apex.Q;
 yyaxis left
 plot(Q_vals, sw.h_apex.f_n1,'b-o','LineWidth',2,'MarkerSize',7,'DisplayName','f_{n1}');
 ylabel('f_{n1}  (Hz)','FontSize',10);
-xline(2.31,'r--','LineWidth',1.5,'Label','Q=2.31 (threshold)','FontSize',9);
+    xline(2.35,'r--','LineWidth',1.5,'Label','Q=2.35 (threshold)','FontSize',9);
 yyaxis right
 plot(Q_vals, sw.h_apex.vals*1e3,'g-^','LineWidth',2,'MarkerSize',7,'DisplayName','h_{apex} (mm)');
 ylabel('h_{apex}  (mm)','FontSize',10);
@@ -283,14 +284,14 @@ plot(tv_mm, sw.t_beam.f_n1,'b-o','LineWidth',2,'MarkerSize',7);
 ylabel('f_{n1}  (Hz)','FontSize',10);
 yyaxis right
 plot(tv_mm, sw.t_beam.Q,'m-s','LineWidth',2,'MarkerSize',7);
-yline(2.31,'r--','LineWidth',1.5,'Label','Q_{min}=2.31');
+    yline(2.35,'r--','LineWidth',1.5,'Label','Q_{min}=2.35');
 ylabel('Q = h/t','FontSize',10);
 xlabel('Beam thickness  (mm)','FontSize',10);
 title('Sensitivity: Beam Thickness','FontWeight','bold');
 grid on; box on;
 
 sgtitle(sprintf(['Optimization — Curved-Beam Bistable  |  Design 9 defaults  |  ' ...
-                 'f_{n1}=%.2f Hz, ΔE=%.3f mJ'], f_n1, (params.F_push_1cell * params.d_stroke_1cell)/4*1e3), ...
+                 'f_{n1}=%.2f Hz, ΔE=%.3f mJ'], f_n1, (params.n_cells * params.F_push_1cell * params.d_stroke_1cell)/4*1e3), ...
         'FontSize',12,'FontWeight','bold');
 end
 
@@ -309,14 +310,15 @@ end
 function [F_restore, V_fun, d_stroke, d_saddle, k_eff_s1, k_eff_s2, A_coeff] = ...
     build_force_model_raw(F_push_1cell, d_stroke_1cell, d_saddle_frac, n_cells, ~, ~)
 
-d_stroke = n_cells * d_stroke_1cell;
+d_stroke = d_stroke_1cell;
 d_saddle = d_saddle_frac * d_stroke;
 d_push   = 0.27 * d_stroke;
+F_push_total = n_cells * F_push_1cell;
 
 % denom = (+)(-)(-)  > 0  →  A_coeff > 0  →  F_restore = -A*x*(x-ds)*(x-df)
 % gives negative restoring force for 0 < x < d_saddle  (State 1 stable) ✓
 denom   = d_push * (d_push - d_saddle) * (d_push - d_stroke);
-A_coeff = F_push_1cell / denom;
+A_coeff = F_push_total / denom;
 
 F_restore = @(x) -A_coeff .* x .* (x - d_saddle) .* (x - d_stroke);
 

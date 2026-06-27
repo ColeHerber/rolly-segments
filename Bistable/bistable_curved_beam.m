@@ -5,13 +5,14 @@
 %   y0(xi) = (h/2) * [1 - cos(2*pi*xi/l)]   (cosine profile, 0 <= xi <= l)
 %
 % Force-displacement calibrated to Zolfagharian Design 9 experimental data
-% (ABS, 0.6 mm beam, 5-cell stack, ~27.5 mm total stroke, 3.3 cm in paper).
+% (ABS, 0.6 mm beam, parallel beam pack; beam count increases force/stiffness,
+% not stroke).
 %
 % Two dynamic models:
 %   1-DOF: hook mass on bistable element under chirp excitation → snap-through
 %   2-DOF: main mass + TMD mass (Zolfagharian Fig. 4) → frequency response
 %
-% Bistability condition (Qiu et al.):  Q = h/t  >  2.31
+% Bistability condition (Qiu et al.):  Q = h/t  >=  2.35
 
 clear; clc; close all;
 
@@ -25,16 +26,16 @@ nu_abs     = 0.35;     % [-]     Poisson's ratio (ABS)
 rho_abs    = 1040;     % [kg/m³] ABS density
 t_beam     = 0.6e-3;   % [m]     Beam thickness  ← key bistability parameter
 l_span     = 42e-3;    % [m]     Horizontal beam span  (hinge-to-hinge)
-h_apex     = 2.5e-3;   % [m]     Apex height  (set h/t > 2.31 for bistability)
-n_cells    = 5;        % [-]     Stacked cells (each adds ~5.5 mm stroke)
-% To target a different total stroke, adjust n_cells or h_apex.
+h_apex     = 2.5e-3;   % [m]     Apex height  (set h/t >= 2.35 for bistability)
+n_cells    = 5;        % [-]     Parallel beam count
+% To target a different stroke, adjust d_stroke_1cell or h_apex.
 % To target a different natural frequency, adjust m_hook or n_cells
-% (more cells → lower stiffness → lower freq; fewer cells → higher freq).
+% (more parallel beams → higher stiffness → higher freq).
 
 %% ── Force calibration (Design 9, Table 2 of Zolfagharian 2025) ───────
 F_push_1cell = 12.55;  % [N]  Peak applied force (push, state 1 → saddle)
 %  Experimental value: 11.10 N; simulation value: 12.55 N
-d_stroke_1cell = 8.25e-3; % [m]  Stroke per cell  (1.5× original 5.5 mm → 41.25 mm total)
+d_stroke_1cell = 8.25e-3; % [m]  Single-beam stroke (parallel beams do not add stroke)
 d_saddle_frac  = 0.545;  % [-]  Saddle position as fraction of stroke (slightly past mid)
 %  Adjusting this shifts the asymmetry of the potential wells.
 
@@ -45,7 +46,7 @@ zeta_hook   = 0.05;    % [-]   Damping ratio for hook model
 %% ── Chirp excitation (1-DOF model) ──────────────────────────────────
 F0_chirp    = 1.0;    % [N]   Excitation amplitude (chirp / direct-drive reference)
 %  Required minimum: F0 >= 2*zeta*k_eff_s1*d_saddle  (independent of m_hook)
-%  For n_cells=5, zeta=0.05: F0_min ~ 7 N at resonance.
+%  Parallel beams raise the resonant force threshold in proportion to n_cells.
 %  10 N is achievable from the RobStride O5 (6 N·m / ~50 mm lever arm = 120 N peak).
 f_chirp_lo  = 1;       % [Hz]  Chirp start frequency
 % f_chirp_hi derived below from f_n1 (= ceil(f_n1 * 1.15)) so it auto-scales
@@ -90,21 +91,23 @@ DISPLAY_FIGS = false;   % false → figures are invisible (still saved); true �
 %%  DERIVED QUANTITIES
 %% ══════════════════════════════════════════════════════════════════════
 Q = h_apex / t_beam;
-assert(Q > 2.31, ...
-    'Q = h/t = %.3f < 2.31 — increase h_apex or decrease t_beam for bistability.', Q);
+Q_min = 2.35;
+assert(Q >= Q_min, ...
+    'Q = h/t = %.3f < %.2f — increase h_apex or decrease t_beam for bistability.', Q, Q_min);
 
 I_beam = t_beam^3 / 12;  % [m³/m] Second moment of area (per unit width)
 
-% Per-cell stroke and saddle
-d_stroke = n_cells * d_stroke_1cell;   % [m] Total stroke
+% Parallel beam pack stroke and saddle
+d_stroke = d_stroke_1cell;             % [m] Mechanism stroke
 d_saddle = d_saddle_frac * d_stroke;   % [m] Saddle (unstable equilibrium)
 d_push   = 0.27 * d_stroke;            % [m] Location of maximum push force
+F_push_total = n_cells * F_push_1cell;
 
 % Coefficient A for cubic restoring force:
 %   F_internal(x) = -A * x * (x - d_saddle) * (x - d_stroke)
-%   Calibrated so that peak of applied external force = F_push_1cell.
-%   (Stack in series: same force threshold, displacement multiplies by n_cells,
-%    so A scales as 1/n_cells^3 relative to per-cell value.)
+%   Calibrated so that peak of applied external force = n_cells*F_push_1cell.
+%   (Parallel beams share displacement and add force, so A scales linearly
+%    with beam count.)
 A_1cell = F_push_1cell / ...
     (d_stroke_1cell * d_saddle_frac * d_stroke_1cell * ...
      (d_saddle_frac * d_stroke_1cell - d_stroke_1cell) * ...
@@ -117,7 +120,7 @@ A_1cell = F_push_1cell / ...
 %   For 0 < x < d_saddle: F_restore < 0  (pulls back to State 1)  ← stable
 %   For d_saddle < x < d_stroke: F_restore > 0  (pushes to State 2)  ← snap
 denom   = d_push * (d_push - d_saddle) * (d_push - d_stroke);  % > 0
-A_coeff = F_push_1cell / denom;                                  % > 0
+A_coeff = F_push_total / denom;                                  % > 0
 
 % Restoring force on hook (positive = toward State 2, negative = toward State 1)
 F_restore = @(x) -A_coeff .* x .* (x - d_saddle) .* (x - d_stroke);
@@ -168,9 +171,11 @@ DeltaE_2 = V_fun(d_saddle) - V_fun(d_stroke);   % barrier from State 2
 fprintf('\n══════════════════════════════════════════════════════════════\n');
 fprintf('   Curved-Beam Bistable — Derived Parameters\n');
 fprintf('══════════════════════════════════════════════════════════════\n');
-fprintf('  Q = h/t = %.3f  (bistability threshold: 2.31)\n', Q);
-fprintf('  Total stroke       = %.1f mm  (%d × %.1f mm cells)\n', ...
+fprintf('  Q = h/t = %.3f  (bistability threshold: %.2f)\n', Q, Q_min);
+fprintf('  Mechanism stroke   = %.1f mm  (%d parallel beams, %.1f mm each)\n', ...
         d_stroke*1e3, n_cells, d_stroke_1cell*1e3);
+fprintf('  F_push total       = %.2f N  (%d × %.2f N beams)\n', ...
+        F_push_total, n_cells, F_push_1cell);
 fprintf('  Saddle position    = %.2f mm  (%.1f%% of stroke)\n', ...
         d_saddle*1e3, d_saddle_frac*100);
 fprintf('  A_coeff            = %.4e N/m³\n', A_coeff);
@@ -256,7 +261,7 @@ x_ramp = y_ramp(:,1);  v_ramp = y_ramp(:,2);
 %%  SUB-SIM B: Minimum Amplitude at f_n1 (binary search)
 %% ══════════════════════════════════════════════════════════════════════
 fprintf('Running sub-sim B: binary search for F0_min at f_n1 = %.2f Hz …\n', f_n1);
-F0_lo_bs = 0.001;  F0_hi_bs = F_push_1cell;
+F0_lo_bs = 0.001;  F0_hi_bs = F_push_total;
 for bs_iter = 1:20
     F0_try   = (F0_lo_bs + F0_hi_bs) / 2;
     F_test   = @(t) F0_try .* sin(2*pi*f_n1.*t);
@@ -560,7 +565,7 @@ title(sprintf('Frequency Response — %s params', k_main_mode),'FontWeight','bol
 legend('Location','northwest','FontSize',8); grid on; box on; set(ax6,'FontSize',8);
 
 sgtitle(sprintf(['Curved-Beam Bistable (Design 9)  |  h=%.1f mm, t=%.1f mm, Q=%.2f, ' ...
-                 '%d cells, stroke=%.1f mm'], ...
+                 '%d parallel beams, stroke=%.1f mm'], ...
         h_apex*1e3, t_beam*1e3, Q, n_cells, d_stroke*1e3), ...
         'FontSize',12,'FontWeight','bold');
 

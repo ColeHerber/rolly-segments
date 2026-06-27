@@ -65,6 +65,40 @@ compliant curved-beam bistable mechanism following the geometry of Qiu et al.~\c
 and the 3D-printed Design~9 of Zolfagharian et al.~\cite{zolfagharian2025}, with a companion
 two-degree-of-freedom tuned mass damper (TMD) model~\cite{denhartog1956}.
 
+\subsection{Variable Map}
+\label{ssec:variables_plain}
+
+The MATLAB scripts use compact variable names. The table below gives the
+mechanical meaning of the variables that drive the model.
+
+\begin{table}[H]
+\centering
+\caption{Plain-language map between MATLAB names and model variables.}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{3.1cm} p{3.1cm} p{7.2cm}}
+\toprule
+\textbf{MATLAB name} & \textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\texttt{h\_apex} & $h$ & Beam arch height at mid-span before snap. This sets the arch shape and the $Q$ ratio. \\
+\texttt{t\_beam} & $t$ & Beam thickness. A thicker beam lowers $Q=h/t$ but increases stiffness. \\
+\texttt{l\_span} & $l$ & Hinge-to-hinge beam span. \\
+\texttt{Q\_beam}, \texttt{Q} & $Q=h/t$ & Bistability ratio. The scripts now require $Q\geq2.35$. \\
+\texttt{n\_cells} & $N$ & Number of parallel bistable beams in the pack. Parallel beams share displacement and add force/stiffness. \\
+\texttt{d\_stroke\_1cell} & $d_{f,1}$ & Single-beam travel from retracted State~1 to deployed State~2. \\
+\texttt{d\_stroke} & $d_f$ & Mechanism travel used by the ODE. In the parallel model this equals \texttt{d\_stroke\_1cell}. \\
+\texttt{d\_saddle} & $d_s$ & Unstable saddle displacement. Crossing this displacement triggers snap-through. \\
+\texttt{F\_push\_1cell} & $F_{\mathrm{push},1}$ & Peak force for one beam. The beam-pack force is $N F_{\mathrm{push},1}$. \\
+\texttt{A\_coeff} & $A$ & Cubic force coefficient in $F_{\mathrm{restore}}=-A d(d-d_s)(d-d_f)$. \\
+\texttt{k\_eff\_s1} & $k_{\mathrm{eff},1}$ & Linearized stiffness near the retracted well. This sets $f_{n,1}$. \\
+\texttt{m\_hook} & $m_h$ & Hook/reference mass attached to the bistable mechanism. \\
+\texttt{M\_plate} & $M_P$ & Moving plate/structure mass used in the base-excitation model. \\
+\texttt{xP} & $x_P$ & Absolute plate displacement. \\
+\texttt{xr}, \texttt{x\_rel} & $x_{\mathrm{rel}}$ & Hook displacement relative to the plate. Snap occurs when this crosses $d_s$. \\
+\texttt{A\_min\_c2} & $A_{\min}$ & Minimum prescribed plate amplitude for Config~2 snap in the linear estimate. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 %%─────────────────────────────────────────────────────────────────────────────
 \section{Compliant Curved-Beam Bistable Mechanism}
 \label{sec:sim2}
@@ -106,8 +140,7 @@ For a curved beam to exhibit bistability, two design conditions matter most
     Qiu et al.\ report that a second-mode-constrained curved beam becomes
     bistable once this geometric ratio is large enough; their analysis and
     force-displacement plots put the threshold at about $Q=2.35$
-    \cite{qiu2004}. The MATLAB model uses $Q>2.31$ as a numerical guard, but
-    the more conservative design check is $Q\gtrsim2.35$.
+    \cite{qiu2004}. The MATLAB model now enforces $Q\geq2.35$ directly.
 
   \item \textbf{Mode-2 suppression}: For a single beam, buckling mode~2 is
     asymmetric and prevents robust bistability. In the Zolfagharian Design~9, a
@@ -238,38 +271,36 @@ $k_{\mathrm{eff,2}} = A\,d_f(d_f-d_s) \approx 0.45\,A\,d_f^2$, while
 $k_{\mathrm{eff,1}} = A\,d_s\,d_f \approx 0.55\,A\,d_f^2$, so
 $k_{\mathrm{eff,2}} < k_{\mathrm{eff,1}}$ and thus $f_{n,2} < f_{n,1}$.
 
-\subsection{Stacked Cell Mechanics}
+\subsection{Parallel Beam-Pack Mechanics}
 \label{ssec:stacked}
 
-Zolfagharian et al.~\cite{zolfagharian2025} use a stack of cells to increase
-stroke. In the ideal series model used here:
+The robot layout is treated as a parallel pack of identical curved beams. The
+beams share the same hook displacement, so adding beams does \emph{not} add
+stroke. Instead, the force and stiffness add:
 \begin{align}
-  d_{f,N} &= N\,d_{f,1} \quad\text{(total stroke)} \label{eq:stackstroke}\\
-  d_{s,N} &= N\,d_{s,1} \quad\text{(saddle position scales proportionally)} \label{eq:stacksaddle}
+  d_{f,N} &= d_{f,1} \quad\text{(same stroke)} \label{eq:stackstroke}\\
+  d_{s,N} &= d_{s,1} \quad\text{(same saddle position)} \label{eq:stacksaddle}\\
+  F_{\mathrm{push},N} &= N\,F_{\mathrm{push},1}
 \end{align}
-If the cells are identical and snap sequentially, the peak force threshold is
-approximately unchanged: $F_{\mathrm{push},N} \approx F_{\mathrm{push},1}$.
 
-The coefficient $A$ for the stacked system relates to the per-cell coefficient:
+The coefficient $A$ for the beam pack therefore scales linearly:
 \begin{equation}
-  A_N = \frac{A_1}{N^3}
+  A_N = N\,A_1
   \label{eq:AN}
 \end{equation}
-which follows because the cubic force polynomial scales as
-$A_N\cdot(Nd_p)(Nd_p - Nd_s)(Nd_p - Nd_f) = N^3\,A_N\cdot d_p(d_p-d_s)(d_p-d_f) = F_{\mathrm{push}}$.
-
-The effective stiffnesses scale as:
+because the displacement terms in the cubic polynomial are unchanged while the
+force is multiplied by $N$. The effective stiffnesses scale the same way:
 \begin{equation}
-  k_{\mathrm{eff,1},N} = A_N\cdot N d_s \cdot N d_f = \frac{A_1\,d_s\,d_f}{N}
-                       = \frac{k_{\mathrm{eff,1},1}}{N}
+  k_{\mathrm{eff,1},N} = A_N\,d_s\,d_f = N\,k_{\mathrm{eff,1},1}
   \label{eq:keffN}
 \end{equation}
-Thus adding cells \emph{reduces stiffness} and \emph{lowers natural frequency}:
+Thus adding parallel beams raises the natural frequency:
 \begin{equation}
-  f_{n,1,N} = \frac{f_{n,1,1}}{\sqrt{N}}
+  f_{n,1,N} = \sqrt{N}\,f_{n,1,1}
   \label{eq:fnN}
 \end{equation}
-This provides a design knob: choose $N$ to target a specific natural frequency.
+This correction keeps the saddle displacement on the order of a single beam's
+travel, not five times that travel.
 
 \subsection{1-DOF Hook Snap-Through Model}
 \label{ssec:1dof}
@@ -434,9 +465,8 @@ housing mass is excluded from $M_P$.
 $$\text{Motor} \;\to\; \text{Bearing} \;\to\;
   \text{Plate} + \text{External blocks} \;\to\; \text{Beams} \;\to\; \text{Hook}$$
 
-Configuration~2 avoids the tuned-mass-damper anti-resonance problem (see
-Section~\ref{ssec:comparison}) because the motor enforces the plate amplitude
-regardless of the hook's dynamics.
+Configuration~2 avoids the tuned-mass-damper anti-resonance problem because the
+motor enforces the plate amplitude regardless of the hook's dynamics.
 
 \subsubsection{Coordinates}
 
@@ -918,88 +948,6 @@ Setting $n = 1$ in \cref{eq:F0_detuned}:
 which recovers \cref{eq:F0_tuned}.
 
 %%─────────────────────────────────────────────────────────────────────────────
-\subsection{Comparison of Cases and Design Guidance}
-\label{ssec:comparison}
-
-\subsubsection{Closed-Form Comparison}
-
-Define the off-resonance baseline $T_0 = 2\zeta_h M_P \omega_{n,1}^2 d_s$. Then:
-\begin{align}
-  \text{Case 1 (tuned):}\quad
-    F_0 &\geq 4\zeta_h\zeta_P\,M_P\,\omega_{n,1}^2\,d_s = 2\zeta_P\,T_0 \label{eq:F0_C1_norm}\\
-  \text{Case 2 (stiffness-controlled):}\quad
-    F_0 &\geq T_0\,\sqrt{(n^2-1)^2 + (2\zeta_P n)^2} \label{eq:F0_C2_norm}
-\end{align}
-
-The ratio of Case~2 to Case~1 thresholds is unchanged from the rotating-unbalance
-analysis:
-\begin{equation}
-  \frac{\text{Case 2 threshold}}{\text{Case 1 threshold}}
-  = \frac{\sqrt{(n^2-1)^2 + (2\zeta_P n)^2}}{2\zeta_P}
-  \approx \frac{n^2 - 1}{2\zeta_P}
-  \qquad (n > 1,\;\zeta_P \ll 1)
-  \label{eq:ratio_C2_C1}
-\end{equation}
-
-For $\zeta_P = 0.02$ and $n = 2$: ratio $\approx (4-1)/(0.04) = 75$.
-For $n = 1.5$: ratio $\approx (2.25-1)/0.04 = 31$.
-For $n = 1.1$: ratio $\approx (1.21-1)/0.04 = 5.3$.
-
-Even a modest $10\%$ detuning ($n = 1.1$) increases the required motor force
-by more than $5\times$ compared to the tuned case.
-
-\subsubsection{Design Guidelines}
-
-The analysis above yields three actionable design rules:
-
-\begin{enumerate}
-  \item \textbf{Tune the plate.} Set the mounting plate's natural frequency to
-    match the bistable mechanism's natural frequency by choosing the stiffness of
-    the isolators or mounting brackets:
-    \begin{equation}
-      k_s = M_P\,(2\pi f_{n,1})^2
-      \label{eq:ks_design}
-    \end{equation}
-    Even an approximate match ($n \leq 1.1$) strongly reduces the required
-    force compared with a stiff, uncontrolled
-    plate.  Note that $M_P$ here is the mass of the \emph{plate and bistable
-    assembly only} --- the motor body should be mounted separately to the chassis
-    so that its mass does not add to $M_P$.
-
-  \item \textbf{Minimize plate damping $\zeta_P$.} The tuned threshold is
-    $4\zeta_h\zeta_P M_P \omega_{n,1}^2 d_s \propto \zeta_P$. Using low-loss-factor
-    rubber isolators is preferred, provided the plate does not become too loose
-    or poorly constrained for the robot packaging.
-
-  \item \textbf{Verify the gearbox pass-band.} Any gearbox in the drivetrain
-    attenuates vibrations above $f_{\mathrm{cut}}$ (\cref{eq:fcut}).  Confirm
-    that $f_{n,1} < f_{\mathrm{cut}}$ so that the actuator force is not filtered
-    before it reaches the bistable plate.  High-ratio straight-tooth gearboxes
-    are particularly susceptible (see Section~\ref{sssec:highratiospur}); a
-    low-ratio planetary or QDD stage is preferred.  Use final mounted geometry
-    rather than the bare datasheet value for this check.
-\end{enumerate}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{Config_2__Prescribed_Base_Motion.png}
-\caption{Time-domain snap-through simulation for Configuration~2 (prescribed base
-         motion). The plate displacement $x_P(t)$ and relative hook displacement
-         $x_\mathrm{rel}(t)$ are plotted; the hook crosses the saddle $d_s$ and
-         latches into State~2 without further motor input.}
-\label{fig:config2_snap}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{Bistable_Excitation__Animation__Config_2_Prescribed_Motion.png}
-\caption{Animation snapshot of the Configuration~2 bistable excitation
-         (prescribed base motion). The plate oscillates at $f_{n,1}$ and the
-         hook builds resonant amplitude until snap-through occurs.}
-\label{fig:anim_config2}
-\end{figure}
-
-%%─────────────────────────────────────────────────────────────────────────────
 \subsection{Motor Mounted on the Bistable Plate: Coupling Model and Assumptions}
 \label{ssec:motor_plate}
 %%─────────────────────────────────────────────────────────────────────────────
@@ -1143,10 +1091,10 @@ constant speed without tracking or position control.
 \midrule
 Rigid bearing
   & $T_b(\omega) = 1$
-  & Valid: $k_b \gg m_e\omega^2$ at 19.7 Hz \\
+  & Valid: $k_b \gg m_e\omega^2$ near the current resonance \\
 Rigid motor shaft
   & $\omega_{\mathrm{crit}} \gg \omega$
-  & Valid if shaft critical speed $\gg$ 19.7 Hz \\
+  & Valid if shaft critical speed $\gg f_{n,1}$ \\
 Constant motor speed
   & $\dot\omega = 0$
   & Valid if motor torque bandwidth $\gg f_{n,1}$ \\
@@ -1255,8 +1203,8 @@ This has \emph{exactly the same form} as the rotating-unbalance plate equation
   \label{eq:pm_sub2}
 \end{align}
 
-All results from Sections~\ref{ssec:plateTF}--\ref{ssec:comparison} carry over
-with these substitutions.
+The plate-transfer and snap-threshold results above carry over with these
+substitutions.
 
 \subsubsection{Snap Condition for the Proof-Mass Configuration}
 
@@ -1334,7 +1282,7 @@ system sensitive to parameter variation.
 \includegraphics[width=\textwidth]{412_Proof-Mass__Mass_Actuation_Analysis.png}
 \caption{Proof-mass actuation analysis: minimum proof mass $M_{pm,\min}$ and
          corresponding snap-through drive frequency as a function of design
-         parameters ($N$ cells, hook mass $m_h$).}
+         parameters ($N$ parallel beams, hook mass $m_h$).}
 \label{fig:pm_analysis}
 \end{figure}
 
@@ -1348,248 +1296,39 @@ system sensitive to parameter variation.
 \end{figure}
 
 %%─────────────────────────────────────────────────────────────────────────────
-\section{RS05 Motor --- Specifications and CAN Control for Bistable Excitation}
-\label{sec:rs05}
+\section{Actuator Limit Used in the Simulation}
+\label{sec:actuator_limit}
 %%─────────────────────────────────────────────────────────────────────────────
 
-This section documents the RobStride RS05 quasi-direct-drive motor specifications
-and CAN communication protocol as they relate to commanding sinusoidal vibration
-for bistable snap-through.  All values are taken directly from the RS05 User
-Manual (Rev.\ 260428)~\cite{robstride2026}.
-
-%%─────────────────────────────────────────────────────────────────────────────
-\subsection{Motor Specifications}
-\label{ssec:rs05_specs}
-
-\begin{table}[H]
-\centering
-\caption{RS05 key parameters relevant to bistable excitation.}
-\renewcommand{\arraystretch}{1.35}
-\small
-\begin{tabular}{p{3.4cm} p{3.4cm} p{6.2cm}}
-\toprule
-\textbf{Parameter} & \textbf{Value} & \textbf{Notes} \\
-\midrule
-Rated torque          & 1.6\,N$\cdot$m      & At 100\,RPM, 70$\times$70\,mm heat sink \\
-Peak torque           & 5.5\,N$\cdot$m      & Short duration only (see overload table) \\
-No-load speed         & 480\,RPM $\pm$10\%  & Output shaft; $\approx 50.3$\,rad/s $= 8$\,Hz \\
-Torque constant $K_t$ & 0.94\,N$\cdot$m/A$_\text{rms}$ & Converts Iq current to torque \\
-Deceleration ratio    & 7.75:1              & Planetary gearbox \\
-Drive mode            & FOC                 & Field-oriented control \\
-Max phase current     & 11\,A$_\text{pk}$   & Gives peak torque $\approx 11\times0.94/\sqrt{2}\approx7.3$\,N$\cdot$m (limited to 5.5) \\
-Rated phase current   & 2.4\,A$_\text{pk}$  & Continuous \\
-CAN bus rate          & 1\,Mbps             & CAN 2.0B, 29-bit extended frame \\
-Encoder               & 14-bit absolute     & $\pm4\pi$ range (Type~2 update firmware) \\
-Velocity feedback     & $\pm50$\,rad/s      & Mapped [0--65535] in Type~2 frame \\
-Torque feedback       & $\pm5.5$\,N$\cdot$m & Mapped [0--65535] in Type~2 frame \\
-\bottomrule
-\end{tabular}
-\label{tab:rs05_specs}
-\end{table}
-
-%%─────────────────────────────────────────────────────────────────────────────
-\subsection{Speed Limit and Implications for Bistable Excitation}
-\label{ssec:rs05_speed}
-
-The 480\,RPM rating is a \textbf{shaft angular velocity limit}
-($\omega_{\max} = 50.3$\,rad/s), not a frequency limit.  Its effect depends on
-whether the shaft undergoes \emph{continuous rotation} or
-\emph{oscillating (reciprocating) motion}.
-
-\subsubsection{Rotating Unbalance --- Continuous Rotation (Infeasible)}
-
-A rotating unbalance requires the shaft to spin continuously at the bistable
-natural frequency $f_{n,1}$.  To do so:
+The detailed RS05 motor parameters and CAN command notes have been moved to the
+separate RS05 notes (\path{rs05_motor_specifications.tex} and
+\path{rs05_motor_specifications.typ}). The main derivation only needs the
+output-shaft velocity limit used by the proof-mass and prescribed-motion models:
 \begin{equation}
-  n_{\mathrm{required}} = f_{n,1} \times 60
+  \omega_{\max} = 50.3\;\text{rad/s}.
 \end{equation}
-For $f_{n,1} \approx 20$\,Hz (current design parameters): $n = 1200$\,RPM,
-which is $2.5\times$ the 480\,RPM limit.  A rotating unbalance is therefore
-infeasible on the RS05 at the bistable resonance frequency.
 
-\subsubsection{Oscillating Excitation --- Velocity, Not Frequency, Is the Constraint}
-
-For any \emph{sinusoidal oscillation} (proof-mass or prescribed base motion)
-at frequency $f$ and angular shaft amplitude $\Theta$\,(rad):
+For sinusoidal shaft motion at frequency $f$ and angular amplitude $\Theta$,
 \begin{equation}
-  v_{\mathrm{peak}} = \Theta \cdot 2\pi f \;\leq\; \omega_{\max} = 50.3\;\text{rad/s}
+  v_{\mathrm{peak}} = \Theta\,2\pi f \leq \omega_{\max}
   \label{eq:vpeak}
 \end{equation}
-The constraint limits the \emph{amplitude}, not the frequency.  At any frequency
-the motor can oscillate with amplitude:
+so the maximum angular amplitude is
 \begin{equation}
   \Theta_{\max}(f) = \frac{\omega_{\max}}{2\pi f}
   \label{eq:Thetamax}
 \end{equation}
-The corresponding maximum linear stroke through lever arm $r$ is:
+and the corresponding linear stroke through lever arm $r$ is
 \begin{equation}
-  \delta_{\max}(f) = \Theta_{\max}(f) \cdot r
-                   = \frac{\omega_{\max}\,r}{2\pi f}
+  \delta_{\max}(f) = \frac{\omega_{\max}r}{2\pi f}.
   \label{eq:deltamax}
 \end{equation}
-For snap-through the stroke must reach the saddle: $\delta_{\max} \geq d_s$.
-This gives a minimum lever arm for a given drive frequency:
+For snap-through, the available stroke must reach the saddle $d_s$, so
 \begin{equation}
-  r_{\min}(f) = \frac{2\pi f\,d_s}{\omega_{\max}}
+  r_{\min}(f) = \frac{2\pi f d_s}{\omega_{\max}}.
   \label{eq:rmin}
 \end{equation}
 
-\paragraph{Numerical example (current design).}
-With $m_h = 0.200$\,kg, $N = 5$ cells, $d_{f,1} = 8.25$\,mm:
-$d_s \approx 22.5$\,mm, $f_{n,1} \approx 19.7$\,Hz.
-\begin{align}
-  \Theta_{\max}(f_{n,1}) &= 50.3 / (2\pi \times 19.7) = 0.406\;\text{rad} = 23.3^{\circ} \\
-  \delta_{\max}(f_{n,1}) &= 0.406 \times 0.050 = 20.3\;\text{mm} \quad (r = 50\;\text{mm})
-\end{align}
-Since $d_s = 22.5\,\text{mm} > 20.3\,\text{mm}$, a 50\,mm lever arm is
-marginally insufficient.  The minimum lever arm required is:
-\begin{equation}
-  r_{\min} = 2\pi \times 19.7 \times 0.0225 / 50.3 = 55.4\;\text{mm}
-\end{equation}
-A lever arm of 56\,mm or longer makes the velocity constraint non-binding.
-
-\paragraph{Config~2: prescribed base motion.}
-For Config~2 the motor prescribes plate displacement $x_P(t) = A\sin(\omega_{n,1}t)$.
-The minimum plate amplitude for snap is $A_{\min} = 2\zeta_h d_s = 2.25$\,mm.
-The corresponding peak shaft velocity:
-\begin{equation}
-  v_{\mathrm{peak}} = \frac{A_{\min}}{r} \cdot \omega_{n,1}
-                   = \frac{2.25\,\text{mm}}{50\,\text{mm}} \times 123.8\,\text{rad/s}
-                   = 5.57\;\text{rad/s}
-                   \ll \omega_{\max}
-\end{equation}
-Config~2 is within the velocity limit and requires
-$\tau = 2\zeta_h\,k_{\mathrm{eff}}\,d_s\,r \approx 0.34$\,N$\cdot$m for a
-50\,mm lever arm, about 21\% of rated torque.
-
-%%─────────────────────────────────────────────────────────────────────────────
-\subsection{Control Modes}
-\label{ssec:rs05_modes}
-
-The run mode is selected by writing parameter \texttt{run\_mode}
-(index \texttt{0x7005}) via Communication Type~18, then enabling the motor
-with Type~3.
-
-\begin{table}[H]
-\centering
-\caption{RS05 control modes (parameter \texttt{run\_mode}, index
-         \texttt{0x7005}).}
-\renewcommand{\arraystretch}{1.35}
-\small
-\begin{tabular}{c p{3.0cm} p{9.0cm}}
-\toprule
-\textbf{Value} & \textbf{Mode} & \textbf{Description} \\
-\midrule
-0 & Operation (MIT-style) & $\tau_{\mathrm{ref}} = K_d(v_{\mathrm{ref}}-v) + K_p(\theta_{\mathrm{ref}}-\theta) + t_{ff}$; set $K_p=K_d=0$ for pure torque feedforward \\
-1 & Position PP            & S-curve trajectory to target angle; no mid-move speed changes \\
-2 & Velocity               & Speed loop with current limit \\
-3 & Current                & Direct Iq command; no position or speed loop \\
-5 & Position CSP           & Cyclic synchronous position; velocity-limited \\
-\bottomrule
-\end{tabular}
-\label{tab:rs05_modes}
-\end{table}
-
-For sinusoidal bistable excitation, \textbf{mode 0 (operation) or mode 3
-(current)} are the applicable choices.
-
-%%─────────────────────────────────────────────────────────────────────────────
-\subsection{Commanding a Sinusoidal Torque via CAN}
-\label{ssec:rs05_sine}
-
-\subsubsection{No Onboard Sine Generation}
-
-The motor firmware contains no ``sine wave start'' CAN command and no
-writable registers for \texttt{sine\_amplitude} or \texttt{sine\_frequency}.
-The ``Sine Wave Test'' panel in the MotorStudio PC debugger is entirely
-host-side: the PC application computes the sinusoidal setpoint at each tick
-and streams individual CAN frames to the motor.  An embedded controller
-(e.g.\ ESP32) must do the same.
-
-\subsubsection{Option A --- Operation Control Mode (Type~1 Frame)}
-
-The Type~1 frame packs five 16-bit values into a 29-bit extended CAN ID plus
-8-byte data field:
-
-\begin{center}
-\begin{tabular}{ll}
-\toprule
-\textbf{Field} & \textbf{Bistable excitation setting} \\
-\midrule
-$t_{ff}$ [0--65535] $\to$ $[-5.5, +5.5]$\,N$\cdot$m & $\tau_0 \sin(2\pi f_{n,1} t)$, scaled \\
-Angle & 0 \\
-Velocity & 0 \\
-$K_p$ & 0 \\
-$K_d$ & 0 \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The motor responds with a Type~2 feedback frame (position, velocity, torque,
-temperature) after every Type~1 command.
-
-\subsubsection{Option B --- Current Mode with \texttt{iq\_ref} (Type~18)}
-
-\begin{enumerate}
-  \item Write \texttt{run\_mode} = 3 via Type~18 (index \texttt{0x7005}).
-  \item Enable motor: send Type~3.
-  \item Each tick: write \texttt{iq\_ref} (index \texttt{0x7006}, float,
-    $\pm 11$\,A) via Type~18:
-    \begin{equation}
-      i_q(t) = \frac{\tau_0}{K_t}\,\sin(2\pi f_{n,1}\,t)
-      \label{eq:iqref}
-    \end{equation}
-    For $\tau_0 = 0.34$\,N$\cdot$m and $K_t = 0.94$\,N$\cdot$m/A:
-    $i_{q,0} = 0.36$\,A --- well within the $\pm 11$\,A limit.
-\end{enumerate}
-
-The speed controller is inactive in current mode; the motor delivers the
-commanded torque regardless of shaft velocity, subject only to back-EMF and
-the current hardware limit.
-
-%%─────────────────────────────────────────────────────────────────────────────
-\subsection{ESP32 Feasibility Assessment}
-\label{ssec:rs05_esp32}
-
-\begin{table}[H]
-\centering
-\caption{CAN bus load for two RS05 motors commanded at 500\,Hz per motor.}
-\renewcommand{\arraystretch}{1.35}
-\begin{tabular}{ll}
-\toprule
-\textbf{Parameter} & \textbf{Value} \\
-\midrule
-CAN bus rate            & 1\,Mbps \\
-Frame size (extended)   & $\approx 110$\,bits \\
-Frame transmission time & $\approx 110\,\mu$s \\
-Frames/sec (2 motors $\times$ 500\,Hz) & 1000 \\
-CAN bus utilisation     & $1000 \times 110\,\mu\text{s} = 11\%$ \\
-ESP32 loop period       & 1\,ms (hardware timer, Core 1) \\
-Timing jitter           & $\pm 10$--50\,$\mu$s \\
-Phase error at 19.7\,Hz & $\leq 50\,\mu\text{s} / 50.8\,\text{ms} \approx 0.1\%$ \\
-Motor active reporting  & min 10\,ms (100\,Hz) per motor \\
-\bottomrule
-\end{tabular}
-\label{tab:esp32_can}
-\end{table}
-
-The ESP32 is sufficient for this task.  Key implementation notes:
-\begin{itemize}[nosep]
-  \item Disable WiFi/Bluetooth; pin the CAN interrupt and timer callback to
-    Core~1 at high FreeRTOS priority to avoid latency spikes.
-  \item Use \texttt{esp\_timer\_create} (not \texttt{vTaskDelay}) for the 1\,ms
-    tick; jitter is then $<50\,\mu$s.
-  \item Accumulate phase as a running sum ($\varphi \mathrel{+}= 2\pi f \Delta t$
-    each tick) rather than computing $\sin(2\pi f t_{\mathrm{wall}})$ to avoid
-    jitter corrupting the waveform.
-  \item Snap detection: read position (Bytes~0--1 of Type~2 feedback) each
-    reporting cycle; a position jump of $\geq d_s$ through the lever arm
-    signals snap and the torque command should be zeroed.
-  \item Enable CAN timeout protection: set \texttt{CAN\_TIMEOUT} $> 0$ so the
-    motor enters reset mode if CAN communication is lost (prevents runaway).
-\end{itemize}
-
-%%─────────────────────────────────────────────────────────────────────────────
 \section{Optimization}
 \label{sec:opt}
 %%─────────────────────────────────────────────────────────────────────────────
@@ -1656,7 +1395,7 @@ search over the nonlinear ODE.
 \end{subfigure}\hfill
 \begin{subfigure}[b]{0.49\textwidth}
   \includegraphics[width=\textwidth]{3-D_M_pmminf_drive_n_cells.png}
-  \caption{$M_{pm,\min}$ vs.\ drive frequency and number of cells $N$.}
+  \caption{$M_{pm,\min}$ vs.\ drive frequency and number of parallel beams $N$.}
   \label{fig:3d_pm_ncells}
 \end{subfigure}
 \caption{3-D design surfaces for the minimum required proof mass $M_{pm,\min}$
@@ -1692,7 +1431,7 @@ mass is required --- the motor already present for locomotion is used.
 \end{subfigure}\hfill
 \begin{subfigure}[b]{0.49\textwidth}
   \includegraphics[width=\textwidth]{3-D_Torquef_drive_n_cells__Config_2.png}
-  \caption{Required torque vs.\ drive frequency and number of cells $N$.}
+  \caption{Required torque vs.\ drive frequency and number of parallel beams $N$.}
   \label{fig:3d_tau_ncells}
 \end{subfigure}
 \caption{3-D design surfaces for the required motor torque under
@@ -1701,25 +1440,29 @@ mass is required --- the motor already present for locomotion is used.
 \label{fig:3d_tau}
 \end{figure}
 
-\subsection{Stacked-Cell Scaling (\texorpdfstring{$N$}{N} cells)}
+\subsection{Parallel Beam-Count Scaling (\texorpdfstring{$N$}{N} beams)}
 \label{ssec:ncells}
 
-Adding bistable cells in series scales the mechanism as follows:
+For the current model, $N$ is the number of parallel bistable beams. The beams
+share the same hook displacement, so adding beams increases force and stiffness,
+not stroke:
 \begin{align}
-  d_f &= N\,d_{f,1} \quad\text{(stroke grows linearly)}\\
-  k_{\mathrm{eff},1} &\propto \frac{1}{N} \quad\text{(stiffness drops)}\\
-  f_{n,1} &\propto \frac{1}{\sqrt{N}} \quad\text{(natural frequency drops)}\\
-  F_{0,\min} &\approx \text{const} \quad\text{(independent of $N$, see \cref{eq:F0min2})}
+  d_f &= d_{f,1} \quad\text{(stroke unchanged)}\\
+  d_s &= d_{s,1} \quad\text{(saddle unchanged)}\\
+  k_{\mathrm{eff},1} &\propto N \quad\text{(stiffness rises)}\\
+  f_{n,1} &\propto \sqrt{N} \quad\text{(natural frequency rises)}\\
+  F_{0,\min} &\propto N \quad\text{(force threshold rises)}
 \end{align}
-The last result follows because $k_{\mathrm{eff},1} \propto 1/N$ and
-$d_s \propto N$, so their product $k_{\mathrm{eff},1}\,d_s$ is constant.
+The old series assumption made the saddle displacement look too large. In the
+parallel model, $N=5$ raises the stored energy and stiffness while keeping the
+hook travel at the single-beam value.
 
-The post-snap potential energy available to accelerate the hook to State~2:
+The post-snap potential energy available to accelerate the hook to State~2 is
 \begin{equation}
-  \Delta E_2 = V(d_s) - V(d_f)
+  \Delta E_2 = V(d_s) - V(d_f).
 \end{equation}
-grows with $N$ (deeper well, larger stroke).  This is the \emph{impact energy}
-available when the hook collides with a target object at State~2.
+It grows with $N$ because the force-displacement curve scales upward, not
+because the stroke grows.
 
 \subsection{Impact Force at State 2}
 \label{ssec:impact}
@@ -1757,72 +1500,6 @@ The impact momentum (relevant for deforming targets):
 \end{equation}
 grows as $\sqrt{m_h}$ — heavier hooks deliver more momentum.
 
-\subsection{Design Sensitivity}
-\label{ssec:sensitivity}
-
-\begin{table}[H]
-\centering
-\caption{Effect of increasing each design variable on key performance metrics.
-         $\uparrow$ = increases, $\downarrow$ = decreases, $\leftrightarrow$ = unchanged.}
-\renewcommand{\arraystretch}{1.4}
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Variable} & $f_{n,1}$ & $d_f$ & $\Delta E_2$ & $F_{0,\min}$
-                  & $M_{pm,\min}$ & $\tau_{C2}$ \\
-\midrule
-$\uparrow m_h$    & $\downarrow$ & $\leftrightarrow$ & $\leftrightarrow$
-                  & $\leftrightarrow$ & see note & $\leftrightarrow$ \\
-$\uparrow N$      & $\downarrow$ & $\uparrow$ & $\uparrow$
-                  & $\leftrightarrow$ & $\downarrow$ & $\leftrightarrow$ \\
-$\uparrow \zeta_h$ & $\leftrightarrow$ & $\leftrightarrow$ & $\leftrightarrow$
-                  & $\uparrow$ & $\uparrow$ & $\uparrow$ \\
-$\uparrow d_{s,\mathrm{frac}}$ & $\downarrow$ & $\leftrightarrow$ & $\downarrow$
-                  & $\uparrow$ & $\uparrow$ & $\uparrow$ \\
-\bottomrule
-\end{tabular}
-\label{tab:sensitivity}
-\end{table}
-
-\noindent\textbf{Note on $m_h$:} $M_{pm,\min}$ depends on the full coupled
-dynamics.  Heavier hooks lower $f_{n,1}$ and $f_{\mathrm{rel}}$, shifting
-the optimal drive frequency and changing $M_{pm,\min}$ non-monotonically.
-The 3-D surface $M_{pm,\min}(f,\,m_h)$ from the MATLAB simulation reveals
-the full dependence.
-
-To \textbf{maximise impact energy}: increase $N$ (more cells, deeper well).
-
-To \textbf{minimise required actuator mass} ($M_{pm}$):
-drive near $f_{\mathrm{rel}}$ (avoid TMD anti-resonance), increase $N$
-(lower $f_{n,1}$ and $f_{\mathrm{rel}}$, higher $F/M$ from
-\cref{eq:force_per_mass}).
-
-To \textbf{minimise motor torque} (Config~2): drive at $f_{n,1}$; torque is
-independent of $m_h$ and $N$ (both cancel in \cref{eq:tau_c2}).
-
-To \textbf{ensure bistability}: maintain $Q = h/t \gtrsim 2.35$ and use a
-double-beam layout to suppress mode~2.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{Comprehensive_Design_Space_vs_n_cells.png}
-\caption{Comprehensive design space: key performance metrics (natural frequency
-         $f_{n,1}$, energy barrier $\Delta E_1$, impact energy $\Delta E_2$,
-         minimum required force $F_{0,\min}$, and minimum proof mass
-         $M_{pm,\min}$) as a function of the number of stacked cells $N$.
-         All curves are normalised to their single-cell values.}
-\label{fig:design_space}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{Impact_Energy__Design_Cost_vs_n_cells.png}
-\caption{Impact energy $\Delta E_2$ and actuation cost metrics as a function
-         of the number of stacked cells $N$.  Impact energy grows with $N$
-         (deeper potential well, longer stroke), while the minimum proof mass
-         $M_{pm,\min}$ decreases, making additional cells doubly beneficial.}
-\label{fig:impact_energy}
-\end{figure}
-
 %%─────────────────────────────────────────────────────────────────────────────
 \section{Nomenclature}
 \label{sec:nomenclature}
@@ -1850,14 +1527,14 @@ double-beam layout to suppress mode~2.
 \multicolumn{4}{l}{\textit{Simulation 2 — Curved-beam bistable}} \\
 $E$        & Pa      & Elastic modulus (ABS)         & 2300$\times10^6$ \\
 $t$        & m       & Beam thickness                & 0.6$\times10^{-3}$ \\
-$h$        & m       & Beam apex height              & 2.5$\times10^{-3}$ \\
+$h$        & m       & Beam apex height              & 3.5$\times10^{-3}$ \\
 $l$        & m       & Beam span                     & 42$\times10^{-3}$ \\
 $Q$        & ---     & Apex-height-to-thickness ratio & $h/t$ (target $\gtrsim2.35$) \\
-$N$        & ---     & Number of stacked cells       & 5 \\
-$d_f$      & m       & Total stroke ($N$ cells)      & $N\times8.25\times10^{-3}$ \\
+$N$        & ---     & Number of parallel beams      & 5 \\
+$d_f$      & m       & Mechanism stroke              & 7.70$\times10^{-3}$ \\
 $d_s$      & m       & Saddle position               & $0.545\,d_f$ \\
 $A$        & N/m$^3$ & Cubic polynomial coefficient  & from \cref{eq:Acoeff} \\
-$F_{\mathrm{push}}$ & N & Peak push force (per cell) & 12.55 (sim), 11.10 (exp) \\
+$F_{\mathrm{push}}$ & N & Peak push force (beam pack) & $N\times52.4$ (current model) \\
 $F_{\mathrm{pop}}$  & N & Valley force               & from cubic fit \\
 $k_{\mathrm{eff,1}}$ & N/m & Stiffness at State~1   & $A\,d_s\,d_f$ \\
 $k_{\mathrm{eff,2}}$ & N/m & Stiffness at State~2   & $A\,d_f(d_f-d_s)$ \\
@@ -1888,7 +1565,7 @@ $Q_P$      & ---     & Plate quality factor $1/(2\zeta_P)$ & 25 \\
 $Q_h$      & ---     & Hook quality factor $1/(2\zeta_h)$ & 10 \\
 \midrule
 \multicolumn{4}{l}{\textit{Section 5 — Optimization and mass actuation}} \\
-$N$        & ---     & Number of bistable cells in series & 5 \\
+$N$        & ---     & Number of parallel bistable beams & 5 \\
 $f_{\mathrm{rel}}$ & Hz & Coupled relative-mode resonance $= \sqrt{k_{\mathrm{eff},1}/M_{\mathrm{red}}}/(2\pi)$ & 22 \\
 $M_{\mathrm{red}}$ & kg & Reduced mass $= m_h M_P/(m_h+M_P)$ & 0.133 \\
 $M_{pm}$   & kg      & Proof mass (oscillating on motor shaft) & optimised \\
@@ -1896,7 +1573,7 @@ $\Delta$   & m       & Proof-mass oscillation amplitude & velocity-limited \\
 $\omega_{\max}$ & rad/s & RS05 max shaft angular velocity (480 RPM) & 50.3 \\
 $M_{pm,\min}$ & kg   & Minimum proof mass to snap at given $(f,N)$ & from sweep \\
 $A_{\min}$ & m       & Minimum plate amplitude for Config~2 snap & $2\zeta_h d_s$ \\
-$\tau_{C2}$ & N$\cdot$m & Config~2 motor torque $= 2\zeta_h k_{\mathrm{eff}} d_s r$ & 0.34 \\
+$\tau_{C2}$ & N$\cdot$m & Config~2 motor torque $= 2\zeta_h k_{\mathrm{eff}} d_s r$ & 2.87 \\
 $\Delta E_2$ & J     & Post-snap potential energy released (saddle to State~2) & grows with $N$ \\
 $v_{\mathrm{impact}}$ & m/s & Hook velocity at State~2 impact & $\sqrt{2\Delta E_2/m_h}$ \\
 $k_{\mathrm{contact}}$ & N/m & Target contact stiffness (Hertz) & $10^4$--$10^{10}$ \\

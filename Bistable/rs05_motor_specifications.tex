@@ -1,0 +1,106 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{hyperref}
+
+\geometry{margin=1.0in}
+\hypersetup{colorlinks=true,linkcolor=blue!70!black,urlcolor=blue}
+
+\title{\textbf{RS05 Motor Notes for Bistable Hook Excitation}}
+\author{Rolly Robot}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\section{Motor Parameters}
+
+\begin{table}[h]
+\centering
+\caption{RS05 parameters used by the bistable simulations.}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{3.6cm} p{3.2cm} p{6.4cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Notes} \\
+\midrule
+Rated torque & 1.6\,N$\cdot$m & Continuous rating with heat sinking. \\
+Peak torque & 5.5\,N$\cdot$m & Short-duration command limit. \\
+No-load output speed & 480\,RPM $\pm10\%$ & Equivalent to $\omega_{\max}\approx50.3$\,rad/s at the output shaft. \\
+Torque constant $K_t$ & 0.94\,N$\cdot$m/A$_{\mathrm{rms}}$ & Used to convert Iq current to torque. \\
+Gear ratio & 7.75:1 & Planetary reduction. \\
+Drive mode & FOC & Field-oriented control. \\
+Maximum phase current & 11\,A$_{\mathrm{pk}}$ & The torque command is still limited to the motor's peak torque range. \\
+CAN bus rate & 1\,Mbps & CAN 2.0B extended frame. \\
+Encoder & 14-bit absolute & Used for snap detection and state feedback. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Velocity Limit}
+
+The 480\,RPM value is a shaft angular velocity limit, not a direct frequency
+limit. For an oscillating shaft command at frequency $f$ and angular amplitude
+$\Theta$,
+\begin{equation}
+  v_{\mathrm{peak}}=\Theta\,2\pi f \leq \omega_{\max}.
+\end{equation}
+Therefore
+\begin{equation}
+  \Theta_{\max}(f)=\frac{\omega_{\max}}{2\pi f}.
+\end{equation}
+With a lever arm $r$, the maximum linear stroke is
+\begin{equation}
+  \delta_{\max}(f)=\frac{\omega_{\max}r}{2\pi f}.
+\end{equation}
+
+\section{CAN Control Modes}
+
+The RS05 run mode is selected by writing \texttt{run\_mode} at index
+\texttt{0x7005} with Communication Type~18, then enabling the motor with
+Type~3.
+
+\begin{table}[h]
+\centering
+\caption{RS05 control modes relevant to sinusoidal excitation.}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{c p{3.0cm} p{8.5cm}}
+\toprule
+\textbf{Value} & \textbf{Mode} & \textbf{Use} \\
+\midrule
+0 & Operation & MIT-style torque/position/velocity command. Set $K_p=K_d=0$ for pure torque feed-forward through $t_{ff}$. \\
+3 & Current & Direct Iq command through \texttt{iq\_ref}; no position or speed loop. \\
+5 & Position CSP & Cyclic synchronous position; useful only if the position trajectory and velocity limit are acceptable. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Streaming A Sine Command}
+
+The motor firmware does not provide an onboard sine-wave generator. A controller
+must compute each sample and stream it over CAN.
+
+For operation mode, send Type~1 frames with
+\[
+  t_{ff}(t)=\tau_0\sin(2\pi f t), \qquad K_p=0,\quad K_d=0.
+\]
+
+For current mode, write
+\[
+  i_q(t)=\frac{\tau_0}{K_t}\sin(2\pi f t)
+\]
+to \texttt{iq\_ref} at index \texttt{0x7006}. For example, a
+2.87\,N$\cdot$m torque amplitude corresponds to about 3.05\,A using
+$K_t=0.94$\,N$\cdot$m/A.
+
+\section{ESP32 Timing}
+
+At 1\,Mbps CAN, a 29-bit extended frame is roughly 110 bits, or about
+110\,$\mu$s on the bus. Two motors commanded at 500\,Hz each require about
+1000 frames/s, so the command traffic is roughly 11\% bus utilisation before
+feedback frames. A 1\,ms hardware-timer loop on the ESP32 is adequate if WiFi
+and Bluetooth are disabled and the CAN/timer work is kept off latency-sensitive
+tasks.
+
+\end{document}
