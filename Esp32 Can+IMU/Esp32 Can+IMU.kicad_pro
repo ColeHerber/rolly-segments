@@ -779,7 +779,7 @@
         "uuid": "904515b0-f96e-4935-be8a-ac627093fee4"
       }
     ],
-    "used_designators": "",
+    "used_designators": "CAN_Vin_PWR1,Xt302+2F4,XT302+2F3,Reset2,CAN_5V_PWR1,R10-11,R24,CAN_TERM2,D6,D9-10,U6-7,Boot3,J3,J5,J16-17,#PWR13,#PWR44,#PWR58-59,#PWR64,#PWR72,#PWR74,#PWR76-83",
     "variants": []
   },
   "sheets": [
