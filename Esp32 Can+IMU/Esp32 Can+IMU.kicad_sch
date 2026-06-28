@@ -7654,6 +7654,16 @@
 	)
 	(wire
 		(pts
+			(xy 255.27 292.1) (xy 255.27 293.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1166275e-f616-4d60-91be-0a99dc03d382")
+	)
+	(wire
+		(pts
 			(xy 63.5 261.62) (xy 63.5 270.51)
 		)
 		(stroke
@@ -7924,6 +7934,16 @@
 	)
 	(wire
 		(pts
+			(xy 255.27 294.64) (xy 255.27 298.45)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3d0b02fe-68a7-45e5-81b3-1aef8ad3e873")
+	)
+	(wire
+		(pts
 			(xy 78.74 314.96) (xy 72.39 314.96)
 		)
 		(stroke
@@ -8154,16 +8174,6 @@
 	)
 	(wire
 		(pts
-			(xy 255.27 293.37) (xy 255.27 292.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "64f98fde-1bb9-43fd-b0ce-a342fe4d654e")
-	)
-	(wire
-		(pts
 			(xy 181.61 248.92) (xy 184.15 248.92)
 		)
 		(stroke
@@ -8281,16 +8291,6 @@
 			(type default)
 		)
 		(uuid "8bc41940-1692-43fb-88b9-82997181928b")
-	)
-	(wire
-		(pts
-			(xy 255.27 298.45) (xy 255.27 294.64)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "912500dc-8896-4838-bd28-780cf17470db")
 	)
 	(wire
 		(pts
@@ -13841,6 +13841,103 @@
 		)
 	)
 	(symbol
+		(lib_id "Power_Protection:USBLC6-2SC6")
+		(at 260.35 292.1 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "39e44073-2492-4633-b5c7-f019740d4952")
+		(property "Reference" "U7"
+			(at 262.0011 284.48 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "USBLC6-2SC6"
+			(at 262.0011 287.02 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23-6_Handsoldering"
+			(at 261.62 298.45 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+				(justify left)
+			)
+		)
+		(property "Datasheet" "https://www.st.com/resource/en/datasheet/usblc6-2.pdf"
+			(at 261.62 300.355 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Description" "Very low capacitance ESD protection diode, 2 data-line, SOT-23-6"
+			(at 260.35 292.1 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "29d2aab5-e7c3-48b8-a103-7789ffed6055")
+		)
+		(pin "5"
+			(uuid "206fa3e4-ab5c-4dab-be00-fe122367cbf9")
+		)
+		(pin "4"
+			(uuid "5186d8c9-19db-4ff9-8fea-08a447c01d7d")
+		)
+		(pin "3"
+			(uuid "6eab65e1-fd12-49d0-a09d-7fe7de63c2d9")
+		)
+		(pin "2"
+			(uuid "1be3d033-6cfb-44e9-ae79-9a46de275de4")
+		)
+		(pin "6"
+			(uuid "f6ebc660-8eb7-4ab0-ac5d-10d6b6f000ce")
+		)
+		(instances
+			(project "Esp32 Can+IMU"
+				(path "/904515b0-f96e-4935-be8a-ac627093fee4"
+					(reference "U7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R_US")
 		(at 419.1 459.74 180)
 		(unit 1)
@@ -18772,103 +18869,6 @@
 			(project "Esp32 Can+IMU"
 				(path "/904515b0-f96e-4935-be8a-ac627093fee4"
 					(reference "R8")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Power_Protection:USBLC6-2SC6")
-		(at 260.35 292.1 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "9b6e3e8e-67c4-481c-9333-4983b2b9f6b2")
-		(property "Reference" "U6"
-			(at 262.0011 284.48 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "USBLC6-2SC6"
-			(at 262.0011 287.02 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-666"
-			(at 261.62 298.45 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-					(italic yes)
-				)
-				(justify left)
-			)
-		)
-		(property "Datasheet" "https://www.st.com/resource/en/datasheet/usblc6-2.pdf"
-			(at 261.62 300.355 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Description" "Very low capacitance ESD protection diode, 2 data-line, SOT-23-6"
-			(at 260.35 292.1 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "6d86a084-a31f-4607-a01d-48fe518d9ca8")
-		)
-		(pin "2"
-			(uuid "ed73cdfc-6e01-4bd0-bb1d-dee86d737593")
-		)
-		(pin "3"
-			(uuid "b1fc23d9-16a8-4129-96c9-9402661f53ad")
-		)
-		(pin "4"
-			(uuid "532ecece-1852-4986-afac-0314ed397d28")
-		)
-		(pin "5"
-			(uuid "a0becdd3-b156-4f39-86c4-d48df2b208b9")
-		)
-		(pin "6"
-			(uuid "7f57cf62-28b8-4a0c-b6a3-53963c338ce2")
-		)
-		(instances
-			(project "Esp32 Can+IMU"
-				(path "/904515b0-f96e-4935-be8a-ac627093fee4"
-					(reference "U6")
 					(unit 1)
 				)
 			)
